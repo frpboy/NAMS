@@ -21,7 +21,7 @@
 | **Framework** | Next.js 14+ (App Router) |
 | **Language** | TypeScript |
 | **Styling** | Tailwind CSS + Shadcn UI |
-| **Database** | **Supabase** PostgreSQL | Supabase
+| **Database** | **Neon** (Serverless PostgreSQL) |
 | **ORM** | Prisma |
 | **Authentication** | NextAuth.js (Auth.js) |
 | **Form Handling** | React Hook Form + Zod |
@@ -113,7 +113,7 @@
 ### Prerequisites
 - Node.js v18.17+ (LTS recommended)
 - Git
-- **Supabase** PostgreSQL database
+- **Neon** (Serverless PostgreSQL) database
 
 ### Initialization Commands
 ```bash
@@ -136,14 +136,12 @@ npx prisma init
 
 ### Environment Variables (.env)
 ```env
-# Supabase - Transaction mode (Supavisor pooler) - for runtime
-DATABASE_URL="postgres://user:password@aws-0-region.pooler.supabase.com:6543/postgres?pgbouncer=true"
-# Supabase - Direct connection (session mode) - for Prisma migrations
-DIRECT_URL="postgres://user:password@aws-0-region.supabase.co:5432/postgres"
+# Neon - Connection pooler - for runtime
+DATABASE_URL="postgresql://<user>:<password>@<project-id>-pooler.<region>.aws.neon.tech/<dbname>?sslmode=require"
+# Neon - Direct connection - for Prisma migrations
+DIRECT_URL="postgresql://<user>:<password>@<project-id>-pooler.<region>.aws.neon.tech/<dbname>?sslmode=require"
 NEXTAUTH_SECRET="<generate with: openssl rand -base64 32>"
 NEXTAUTH_URL="http://localhost:3000"
-SUPABASE_URL="https://your-project.supabase.co"
-SUPABASE_ANON_KEY="your-anon-key"
 ```
 
 ### Database Sync
@@ -189,9 +187,9 @@ npx prisma studio   # Open DB viewer (uses DATABASE_URL)
 ## Deployment
 
 1. Push to GitHub repository
-2. Create/configure **Supabase** project for production
-3. Import into Vercel, configure environment variables (`DATABASE_URL`, `DIRECT_URL`, `NEXTAUTH_SECRET`, `SUPABASE_URL`)
-4. Run `npx prisma db push` on production **Supabase** database (use `DIRECT_URL`)
+2. Create/configure **Neon** project for production
+3. Import into Vercel, configure environment variables (`DATABASE_URL`, `DIRECT_URL`, `NEXTAUTH_SECRET`)
+4. Run `npx prisma db push` on production **Neon** database (use `DIRECT_URL`)
 5. Connect custom domain (e.g., `nams.sahakarclinic.com`)
 6. Run final data migration from Google Sheets
 7. Admin onboarding: configure outlets, tests, users

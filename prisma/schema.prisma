@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  NUTRITIONIST
+}
+
+// ─── Authenticated Users ─────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String   // Hashed with bcrypt
+  role      Role     @default(NUTRITIONIST)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Clinic Outlets ──────────────────────────────────────────────
+
+model Outlet {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  location    String?
+  assessments Assessment[]
+  createdAt   DateTime     @default(now())
+}
+
+// ─── Dynamic Test Catalog ────────────────────────────────────────
+
+model MasterTest {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  category  String   // e.g., "Liver Function", "Vitamins"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+// ─── Patients ────────────────────────────────────────────────────
+
+model Patient {
+  id            String       @id @default(cuid())
+  contactNumber String       @unique // 10-digit UID
+  name          String
+  age           Int
+  sex           String
+  occupation    String?
+  place         String
+  assessments   Assessment[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+// ─── Assessment Transactions ─────────────────────────────────────
+
+model Assessment {
+  id                String   @id @default(cuid())
+  date              DateTime @default(now())
+  patientId         String
+  patient           Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  outletId          String
+  outlet            Outlet   @relation(fields: [outletId], references: [id])
+
+  // Biometrics
+  height            Float    // cm
+  weight            Float    // kg
+  bmi               Float    // Auto-calculated
+
+  // Dynamic Selected Tests (JSON array)
+  selectedTests     Json     // e.g., ["CBC", "LFT", "LIPID"]
+
+  // Clinical Notes
+  variationResults  String?  @db.Text
+  dietPlanNotes     String?  @db.Text
+  remarks           String?  @db.Text
+  needsDietPlan     String   // "Yes" | "No" | "Maybe"
+
+  // Timestamps
+  resultReceivedAt  DateTime
+  interactionAt     DateTime
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([patientId])
+  @@index([outletId])
+  @@index([date])
+}

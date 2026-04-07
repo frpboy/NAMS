@@ -32,8 +32,8 @@ This document maps every technology choice in NAMS directly to the **functional 
 |---|---|---|
 | Reduce return patient entry time by **60%** | React Hook Form + Server Actions | Instant patient lookup with debounced queries, form `reset()` for auto-fill |
 | Eliminate **100%** of BMI calculation errors | Client-side TypeScript logic | Real-time, read-only BMI calculation — no manual input possible |
-| Reduce monthly report time from **1 hour to 1 click** | ExcelJS + Supabase filtered queries | One-click filtered export with dynamic column generation |
-| Scale to unlimited outlets without code changes | Supabase + Prisma dynamic relations | Admin-managed Outlet and MasterTest tables |
+| Reduce monthly report time from **1 hour to 1 click** | ExcelJS + Neon filtered queries | One-click filtered export with dynamic column generation |
+| Scale to unlimited outlets without code changes | Neon + Prisma dynamic relations | Admin-managed Outlet and MasterTest tables |
 | Zero manual formatting on exports | ExcelJS custom mappers | Only conducted tests appear in output — no empty columns |
 
 ---
@@ -55,14 +55,14 @@ This document maps every technology choice in NAMS directly to the **functional 
 
 ## 3. Database & ORM
 
-### Supabase (PostgreSQL)
+### Neon (Serverless PostgreSQL)
 
 | Aspect | Detail |
 |---|---|
-| **Provider** | Supabase |
-| **Database Engine** | PostgreSQL |
-| **Connection Pooling** | Supavisor (Transaction mode on port 6543, Session mode on port 5432) |
-| **Dashboard** | Supabase Table Editor for data inspection |
+| **Provider** | Neon |
+| **Database Engine** | PostgreSQL (Serverless) |
+| **Connection Pooling** | Built-in via PgBouncer |
+| **Console** | Neon SQL Editor for data inspection |
 | **Future Capability** | Row Level Security (RLS) for multi-tenant requirements |
 
 ### Prisma ORM
@@ -76,8 +76,8 @@ This document maps every technology choice in NAMS directly to the **functional 
 ### Connection Strategy
 
 ```
-Runtime (App) ─────► DATABASE_URL (Supavisor Transaction Pooler :6543)
-Migrations ─────────► DIRECT_URL (Direct Session Mode :5432)
+Runtime (App) ─────► DATABASE_URL (Neon connection pooler)
+Migrations ─────────► DIRECT_URL (Neon direct connection)
 ```
 
 ### Models
@@ -140,7 +140,7 @@ The assessment form contains **60+ lab test checkboxes** across multiple categor
 
 - **Patient Lookup:** Auto-fill on 10-digit entry — [PRD §6 — P1](./PRD.md)
 - **Categorized Lab Tests:** Accordion-based checkbox groups — [PRD §6 — P1](./PRD.md)
-- **Data Validation:** No "broken" data enters Supabase — [TAD §5](./Technical%20Architecture%20Design.md#5-security--rbac)
+- **Data Validation:** No "broken" data enters **Neon** — [TAD §5](./Technical%20Architecture%20Design.md#5-security--rbac)
 
 ---
 
@@ -236,7 +236,7 @@ The assessment form contains **60+ lab test checkboxes** across multiple categor
 |---|---|
 | **ESLint** | Code quality and consistency |
 | **Prisma Studio** | Visual database browser for development and audit |
-| **Supabase Dashboard** | Direct table inspection and SQL editor |
+| **Neon Console** | Direct table inspection and SQL editor |
 
 ### Recommended Testing Tools (QA Phase)
 
@@ -257,7 +257,7 @@ The assessment form contains **60+ lab test checkboxes** across multiple categor
 | Service | Role |
 |---|---|
 | **Vercel** | Hosting — optimized for Next.js, automatic SSL, CI/CD from GitHub |
-| **Supabase** | PostgreSQL database — managed, pooled connections, dashboard |
+| **Neon** | PostgreSQL database — managed, pooled connections, console |
 | **GitHub** | Source control — pushes to `main` trigger Vercel deployment |
 
 ### CI/CD Flow
@@ -313,11 +313,11 @@ Then copy the schema from [Technical Architecture Design §2.2](./Technical%20Ar
 ### Environment Variables
 
 ```env
-# Supabase - Transaction mode (runtime)
-DATABASE_URL="postgres://user:password@aws-0-region.pooler.supabase.com:6543/postgres?pgbouncer=true"
+# Neon - Connection pooler (runtime)
+DATABASE_URL="postgresql://<user>:<password>@<project-id>-pooler.<region>.aws.neon.tech/<dbname>?sslmode=require"
 
-# Supabase - Direct mode (migrations)
-DIRECT_URL="postgres://user:password@aws-0-region.supabase.co:5432/postgres"
+# Neon — Direct mode (migrations)
+DIRECT_URL="postgresql://<user>:<password>@<project-id>-pooler.<region>.aws.neon.tech/<dbname>?sslmode=require"
 
 # Auth
 NEXTAUTH_SECRET="<openssl rand -base64 32>"
@@ -325,8 +325,6 @@ NEXTAUTH_URL="http://localhost:3000"
 
 # Optional
 NEXT_PUBLIC_APP_URL="https://nams.sahakarclinic.com"
-SUPABASE_URL="https://your-project.supabase.co"
-SUPABASE_ANON_KEY="your-anon-key"
 ```
 
 ---
@@ -337,12 +335,12 @@ SUPABASE_ANON_KEY="your-anon-key"
 |---|---|---|
 | §5 — Efficiency (60% faster entry) | React Hook Form + Server Actions | [TAD §4.1](./Technical%20Architecture%20Design.md#41-patient-lookup-efficiency) |
 | §5 — Accuracy (zero BMI errors) | TypeScript client-side logic | [TAD §4.2](./Technical%20Architecture%20Design.md#42-automated-bmi-calculation-accuracy) |
-| §5 — Reporting (1 hour → 1 click) | ExcelJS + Supabase queries | [TAD §4.3](./Technical%20Architecture%20Design.md#43-export-engine-reporting) |
+| §5 — Reporting (1 hour → 1 click) | ExcelJS + Neon queries | [TAD §4.3](./Technical%20Architecture%20Design.md#43-export-engine-reporting) |
 | §6 — P0: User & Outlet Mgmt | NextAuth + Prisma User/Outlet models | [TAD §2.2](./Technical%20Architecture%20Design.md#22-prisma-schema) |
 | §6 — P1: Smart Assessment | React Hook Form + Zod + Shadcn Stepper | [TAD §3.1](./Technical%20Architecture%20Design.md#31-folder-structure) |
 | §6 — P2: Data Migration | Node.js migration script + Prisma upsert | [TAD §7](./Technical%20Architecture%20Design.md#7-data-migration-plan) |
 | §6 — P2: Selective Exporting | ExcelJS dynamic column mapping | [TAD §4.3](./Technical%20Architecture%20Design.md#43-export-engine-reporting) |
-| §8 — KPIs | Supabase analytics queries | Dashboard table + filters |
+| §8 — KPIs | Neon analytics queries | Dashboard table + filters |
 | §9 — Data Integrity | Phone as UID, Zod validation | [TAD §5](./Technical%20Architecture%20Design.md#5-security--rbac) |
 
 ---

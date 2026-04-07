@@ -1,14 +1,48 @@
-Data Migration is the most sensitive part of this project. You have a wealth of historical data (Sreeraj, Deepa, Muhammed Ijas, etc.) that must be moved from your Google Sheets into the NAMS **Supabase** PostgreSQL database without losing any clinical history.
-Here is the 5-step technical plan to build "The Bridge."
-1. Data Extraction & Cleanup
-The Source: Export your current Google Sheet as a .csv file named legacy_data.csv.
-The Cleanup Rules:
-Unique Identifier: Use the Contact Number as the primary key. If a number appears in multiple rows (like "Muhammed Kutty"), the script will create one Patient record and multiple Assessment records linked to them.
-Normalization: Convert "Male/female/Male " into a standard MALE or FEMALE enum.
-Empty Values: Convert all `.`, `nil`, `not known`, or empty strings in the Google Sheet into `null` or `0` in the database to keep the data "clean."
-2. Field Mapping Table
+# Data Migration — NAMS
 
-This is the **exact** column mapping from the legacy Google Sheet (source: [`PRD.md §9`](./PRD.md)). All 18 columns are accounted for.
+> **Document Type:** Data Migration Plan
+> **Project:** Nutrition Assessment Management System (NAMS)
+> **Status:** Final
+> **Last Updated:** 2026-04-08
+> **Related:** [PRD.md §9](./PRD.md#9-appendix) | [Technical Architecture Design §7](./Technical%20Architecture%20Design.md#7-data-migration-plan)
+
+---
+
+## Overview
+
+Data Migration is the most sensitive part of this project. The historical patient data (Sreeraj, Deepa, Muhammed Ijas, etc.) must be moved from Google Sheets into the NAMS **Neon** (Serverless PostgreSQL) database without losing any clinical history.
+
+---
+
+## Table of Contents
+
+1. [Data Extraction & Cleanup](#1-data-extraction--cleanup)
+2. [Field Mapping Table](#2-field-mapping-table)
+3. [The Migration Script](#3-the-migration-script-typescript)
+4. [Edge Case Handling](#4-edge-case-handling)
+5. [Verification & Audit](#5-verification--audit)
+
+---
+
+## 1. Data Extraction & Cleanup
+
+### Source
+
+Export the current Google Sheet as a `.csv` file named `legacy_data.csv` and place it in the `scripts/` folder.
+
+### Cleanup Rules
+
+| Rule | Detail |
+|---|---|
+| **Unique Identifier** | Use the Contact Number as the primary key. If a number appears in multiple rows (e.g., "Muhammed Kutty"), the script creates **one** `Patient` record and **multiple** `Assessment` records linked to it. |
+| **Normalization** | Convert `Male`, `female`, `Male ` (with trailing space) into the standard `MALE` or `FEMALE` enum. |
+| **Empty Values** | Convert all `.`, `nil`, `not known`, or empty strings into `null` or `0` in the database to keep data clean. |
+
+---
+
+## 2. Field Mapping Table
+
+This is the **exact** column mapping from the legacy Google Sheet. All 18 columns are accounted for.
 
 | # | Google Sheet Column | NAMS Database Target | Transformation Logic |
 |---|---|---|---|
@@ -37,63 +71,104 @@ This is the **exact** column mapping from the legacy Google Sheet (source: [`PRD
 04/11/2025 | sabah      | 69 | Male | not known | mkp | not known | not known | 9249504531 | ALBUMIN (SERUM), urine albumin, urine creatinine, albumin creatinine ratio | | no need | No | no need diet plans
 05/11/2025 | abdurahman | 68 | Male | not known | mkp | not known | not known | 7034578970 | LFT, RFT, FASTING BLOOD SUGAR, POSTPRANDIAL SUGAR, LIPID, TSH               | | healthy plate | No | completed
 ```
-3. The Migration Script (TypeScript)
-We will create a script in /scripts/migrate.ts that uses Prisma to push the data.
-code
-TypeScript
-// Simplified logic for the NAMS Bridge script
+
+---
+
+## 3. The Migration Script (TypeScript)
+
+Create the script at `scripts/migrate.ts`:
+
+```typescript
 import { PrismaClient } from '@prisma/client';
 import csv from 'csv-parser';
 import fs from 'fs';
 
 const prisma = new PrismaClient();
 
+function calculateBMI(height: string, weight: string): number {
+  const h = parseFloat(height);
+  const w = parseFloat(weight);
+  if (!h || !w) return 0;
+  return parseFloat((w / Math.pow(h / 100, 2)).toFixed(2));
+}
+
 async function migrate() {
   const results: any[] = [];
 
-  fs.createReadStream('legacy_data.csv')
+  fs.createReadStream('scripts/legacy_data.csv')
     .pipe(csv())
     .on('data', (data) => results.push(data))
     .on('end', async () => {
       for (const row of results) {
-        // 1. Create or Update Patient (Upsert)
+        // 1. Create or update Patient record (upsert by contact number)
         const patient = await prisma.patient.upsert({
-          where: { contactNumber: row['CONTACT NUMBER'] },
+          where: { contactNumber: row['CONTACT NUMBER'].trim() },
           update: {},
           create: {
-            name: row['NAME'],
-            age: parseInt(row['AGE']),
+            name: row['NAME'].trim(),
+            age: parseInt(row['AGE']) || 0,
             sex: row['SEX'].toUpperCase().trim(),
-            contactNumber: row['CONTACT NUMBER'],
-            place: row['PLACE'],
+            contactNumber: row['CONTACT NUMBER'].trim(),
+            place: row['PLACE'].trim(),
+            occupation: row['OCCUPATION'] || null,
           },
         });
 
-        // 2. Create the Assessment linked to that Patient
+        // 2. Create Assessment linked to that Patient
         await prisma.assessment.create({
           data: {
             patientId: patient.id,
-            outletId: "LEGACY_OUTLET_ID", // Assign a default ID for old data
+            outletId: 'LEGACY_OUTLET_ID', // Assign the "Legacy/Imported" outlet
             height: parseFloat(row['HIGHT']) || 0,
             weight: parseFloat(row['WEIGHT']) || 0,
             bmi: calculateBMI(row['HIGHT'], row['WEIGHT']),
-            selectedTests: row['NAMES OF TEST CONDUCTED'].split(',').map((s: string) => s.trim()),
-            dietPlanNotes: row['DIET'],
-            variationResults: row['VARIATION IN RESULTS'],
-            // ... more mapping
-          }
+            selectedTests: row['NAMES OF TEST CONDUCTED']
+              .split(',')
+              .map((s: string) => s.trim())
+              .filter(Boolean),
+            variationResults: row['VARIATION IN RESULTS'] || null,
+            dietPlanNotes: row['DIET'] || null,
+            remarks: row['REMARKS'] || null,
+            needsDietPlan: row['DO THEY NEED DIET PLAN'] || 'No',
+            resultReceivedAt: new Date(row['Result Received']) || new Date(),
+            interactionAt: new Date(row['Patient Interaction']) || new Date(),
+          },
         });
       }
-      console.log("Migration Complete!");
+
+      console.log('Migration Complete!');
+      await prisma.$disconnect();
     });
 }
-4. Edge Case Handling
-The "Unknown" Outlet: Your old data doesn't specify which of the 5 outlets the test was done at.
-Solution: We will create a special Outlet named "Legacy/Imported" so you can filter these specifically in your reports.
-Duplicate Entries: If a nutritionist submitted a form twice for the same interaction, the script will look at the Timestamp to skip exact duplicates.
-Missing Biometrics: For rows where height/weight are missing (like the early 2026 rows), the system will set BMI to 0 and allow the nutritionist to update it later if they have the records.
-5. Verification & Audit
-After running the bridge, we perform a Data Audit:
-Count Check: Does the Google Sheet have 450 rows? Does NAMS have 450 assessments?
-Lookup Check: Search for "Sreeraj" or "Deepa" in the new NAMS Search Bar. Ensure their entire history (tests, variations, dates) appears correctly.
-Export Check: Try to export a report for "February 2026" from NAMS and compare it to the old Google Sheet.
+
+migrate().catch(console.error);
+```
+
+Run the script:
+
+```bash
+npx ts-node scripts/migrate.ts
+```
+
+---
+
+## 4. Edge Case Handling
+
+| Scenario | Resolution |
+|---|---|
+| **Unknown Outlet** | Legacy data has no outlet info — assign all imported records to a special `"Legacy/Imported"` outlet for easy filtering |
+| **Duplicate Entries** | Check the timestamp — skip exact duplicates silently and log them |
+| **Missing Biometrics** | Set height, weight, and BMI to `0`; allow the nutritionist to update later if the records are available |
+| **Empty Values** (`.`, `N/A`, `nil`, `"not known"`, `""`) | Convert to `null` or `0` in the database |
+
+---
+
+## 5. Verification & Audit
+
+After running the migration script, perform the following checks:
+
+| Check | Description |
+|---|---|
+| **Count Check** | Does the Google Sheet row count match the NAMS assessment count? |
+| **Lookup Check** | Search for known patients (e.g., "Sreeraj", "Deepa") — verify their full history (tests, variations, dates) appears correctly |
+| **Export Check** | Generate a filtered report from NAMS for "February 2026" and compare it against the original Google Sheet |

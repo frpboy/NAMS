@@ -35,7 +35,7 @@ NAMS is a **full-stack web application** built using a **monolithic architecture
 |---|---|---|
 | **Frontend** | React (Next.js App Router) | Dashboard, multi-step assessment forms, admin panels |
 | **Backend** | Next.js Server Actions | Server-side logic without a separate API layer |
-| **Database** | PostgreSQL via **Supabase** | Relational data management for patients, assessments, outlets |
+| **Database** | PostgreSQL via **Neon** (Serverless PostgreSQL) | Relational data management for patients, assessments, outlets |
 | **ORM** | Prisma | Type-safe database queries and schema management |
 
 ---
@@ -196,7 +196,7 @@ Follows the Next.js App Router conventions with route groups, server actions, an
     bmi-calculator.ts
 
 /scripts/
-  migrate.ts               # Legacy Google Sheets → Supabase migration
+  migrate.ts               # Legacy Google Sheets → Neon migration
 ```
 
 ### 3.2 Route Protection
@@ -288,7 +288,7 @@ Only conducted tests appear — no empty columns.
 - All environment variables stored in `.env` (never committed)
 - HTTPS enforced via Vercel auto-provisioned SSL
 - Passwords hashed with bcrypt
-- Supabase connection pooling via Supavisor
+- Neon built-in connection pooling via PgBouncer
 
 ---
 
@@ -311,10 +311,10 @@ Only conducted tests appear — no empty columns.
                                                │
                                                ▼
 ┌──────────────────────────────────────────────────────┐
-│              Supabase (PostgreSQL)                    │
+│              Neon (Serverless PostgreSQL)             │
 │  ┌──────────────────┐  ┌──────────────────────────┐  │
-│  │  Supavisor Pooler│  │   Supabase Dashboard     │  │
-│  │  (Transaction)   │  │   (DB Inspection)        │  │
+│  │  Built-in Pooler │  │   Neon Console           │  │
+│  │  (PgBouncer)     │  │   (DB Inspection)        │  │
 │  └──────────────────┘  └──────────────────────────┘  │
 └──────────────────────────────────────────────────────┘
 ```
@@ -323,13 +323,11 @@ Only conducted tests appear — no empty columns.
 
 | Variable | Source | Purpose |
 |---|---|---|
-| `DATABASE_URL` | Supabase (Transaction mode, port 6543) | Runtime database connection via Supavisor pooling |
-| `DIRECT_URL` | Supabase (Session mode, port 5432) | Prisma migrations and `db push` |
+| `DATABASE_URL` | Neon connection pooler | Runtime database connection via built-in pooling |
+| `DIRECT_URL` | Neon direct connection | Prisma migrations and `db push` |
 | `NEXTAUTH_SECRET` | Generated (`openssl rand -base64 32`) | NextAuth session encryption |
 | `NEXTAUTH_URL` | Local: `http://localhost:3000` | Auth callback URL |
 | `NEXT_PUBLIC_APP_URL` | Deployment URL | Link generation in the app |
-| `SUPABASE_URL` | Supabase project settings | Supabase client initialization (optional) |
-| `SUPABASE_ANON_KEY` | Supabase project settings | Supabase client anon key (optional) |
 
 ### 6.3 CI/CD Pipeline
 
@@ -346,7 +344,7 @@ git push origin main
 
 ## 7. Data Migration Plan
 
-Migrating historical data from Google Sheets to Supabase PostgreSQL.
+Migrating historical data from Google Sheets to Neon (Serverless PostgreSQL).
 
 ### 7.1 Process Overview
 

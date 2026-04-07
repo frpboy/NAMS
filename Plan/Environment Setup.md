@@ -1,93 +1,190 @@
-To set up the NAMS (Nutrition Assessment Management System) environment correctly for a Next.js 14+ project, follow these technical steps. This setup ensures that your development, staging, and production (Vercel) environments are identical.
-1. Local Development Requirements
-Before running commands, ensure your machine has:
-Node.js: v18.17 or later (LTS recommended).
-Git: For version control and Vercel deployment.
-Database Viewer: Prisma Studio (built-in) or DBeaver to see your patient data clearly.
-2. Project Initialization
-Open your terminal and run the following command to create the Next.js foundation:
-code
-Bash
-npx create-next-app@latest nams
-Select these options during setup:
-TypeScript: Yes
-ESLint: Yes
-Tailwind CSS: Yes
-src/ directory: Yes
-App Router: Yes
-Import alias (@/*): Yes
-3. Install Core Dependencies
-Navigate into your folder (cd nams) and install the specific libraries required for NAMS:
-A. Database & Auth
-code
-Bash
-npm install prisma @prisma/client next-auth@beta lucide-react
-B. Form Handling & Validation (Crucial for the 60+ Tests)
-code
-Bash
-npm install react-hook-form zod @hookform/resolvers
-C. UI Components (Shadcn UI)
-Initialize the UI library that gives NAMS its professional clinical look:
-code
-Bash
-npx shadcn-ui@latest init
-# Select "Slate" or "Stone" for a clean medical feel.
-Now install the specific parts we need for the Assessment Form:
-code
-Bash
-npx shadcn-ui@latest add table button input checkbox card dialog tabs accordion
-D. Export & Utility
-code
-Bash
-npm install exceljs jspdf html2canvas date-fns
-4. Database Provisioning (Supabase PostgreSQL)
-The database for NAMS will be hosted on **Supabase**.
-Action: Create a Supabase project and grab your Connection Strings from Settings → Database.
-  - **Connection String (Transaction mode)**: Use for `DATABASE_URL` (uses Supavisor pooling)
-  - **Connection String (Session mode / Direct)**: Use for `DIRECT_URL` (needed for Prisma migrations)
-5. Environment Variables (.env)
-Create a .env file in your root folder. This file stores your "secrets" and prevents them from being leaked on GitHub.
-code
-Env
-# Database Connection (from Supabase)
-# Transaction mode (Supavisor pooler) - for runtime
-DATABASE_URL="postgres://user:password@aws-0-region.pooler.supabase.com:6543/postgres?pgbouncer=true"
-# Direct connection (session mode) - for Prisma migrations
-DIRECT_URL="postgres://user:password@aws-0-region.supabase.co:5432/postgres"
+# Environment Setup — NAMS
 
-# Authentication (Generate a secret with: openssl rand -base64 32)
+> **Document Type:** Environment Setup Guide
+> **Project:** Nutrition Assessment Management System (NAMS)
+> **Status:** Final
+> **Last Updated:** 2026-04-08
+> **Related:** [Tech Stack.md](./Tech%20Stack.md) | [Technical Architecture Design.md](./Technical%20Architecture%20Design.md)
+
+---
+
+## Table of Contents
+
+1. [Local Development Requirements](#1-local-development-requirements)
+2. [Project Initialization](#2-project-initialization)
+3. [Install Core Dependencies](#3-install-core-dependencies)
+4. [Database Provisioning (Neon)](#4-database-provisioning-neon)
+5. [Environment Variables](#5-environment-variables)
+6. [Prisma Initialization](#6-prisma-initialization)
+7. [Version Control & Deployment Setup](#7-version-control--deployment-setup)
+8. [Data Migration Environment](#8-data-migration-environment)
+
+---
+
+## 1. Local Development Requirements
+
+Before running any commands, ensure your machine has the following installed:
+
+| Tool | Version | Purpose |
+|---|---|---|
+| **Node.js** | v18.17+ (LTS) | Runtime environment required by Next.js |
+| **Git** | Latest | Version control and Vercel deployment |
+| **Database Viewer** | Prisma Studio (built-in) or DBeaver | Inspect patient data during development |
+
+---
+
+## 2. Project Initialization
+
+Create the Next.js foundation:
+
+```bash
+npx create-next-app@latest nams
+```
+
+Select the following options during setup:
+
+| Prompt | Answer |
+|---|---|
+| TypeScript | Yes |
+| ESLint | Yes |
+| Tailwind CSS | Yes |
+| `src/` directory | Yes |
+| App Router | Yes |
+| Import alias (`@/*`) | Yes |
+
+---
+
+## 3. Install Core Dependencies
+
+Navigate into your project folder first:
+
+```bash
+cd nams
+```
+
+### A. Database & Auth
+
+```bash
+npm install prisma @prisma/client next-auth@beta lucide-react
+```
+
+### B. Form Handling & Validation
+
+Critical for managing the 60+ lab test checkboxes.
+
+```bash
+npm install react-hook-form zod @hookform/resolvers
+```
+
+### C. UI Components (Shadcn UI)
+
+Initialize the UI library that gives NAMS its professional clinical look:
+
+```bash
+npx shadcn@latest init
+# Select "Slate" or "Stone" for a clean medical feel.
+```
+
+Install the specific components needed for the Assessment Form:
+
+```bash
+npx shadcn@latest add table button input checkbox card dialog tabs accordion \
+  skeleton toast select label radio-group textarea form
+```
+
+### D. Export & Utility
+
+```bash
+npm install exceljs jspdf html2canvas date-fns
+```
+
+---
+
+## 4. Database Provisioning (Neon)
+
+The NAMS database is hosted on **Neon** (Serverless PostgreSQL).
+
+1. Create a new project at [console.neon.tech](https://console.neon.tech)
+2. Go to the connection settings and copy the connection string:
+
+| Connection String | Used For |
+|---|---|
+| **Neon endpoint** | Both `DATABASE_URL` and `DIRECT_URL` — add `?sslmode=require` to each |
+
+Neon provides a serverless Postgres with built-in connection pooling. Both URLs point to the same Neon endpoint.
+
+---
+
+## 5. Environment Variables
+
+Create a `.env` file in your project root. **Never commit this file to GitHub.**
+
+```env
+# Database Connection (from Neon)
+# Connection pooler — for runtime
+DATABASE_URL="postgresql://<user>:<password>@<project-id>-pooler.<region>.aws.neon.tech/<dbname>?sslmode=require"
+
+# Direct connection — for Prisma migrations (same endpoint for Neon)
+DIRECT_URL="postgresql://<user>:<password>@<project-id>-pooler.<region>.aws.neon.tech/<dbname>?sslmode=require"
+
+# Authentication (generate a secret with: openssl rand -base64 32)
 NEXTAUTH_SECRET="your-secret-key-here"
 NEXTAUTH_URL="http://localhost:3000"
 
-# Supabase (Optional - for future Supabase client features)
-SUPABASE_URL="https://your-project.supabase.co"
-SUPABASE_ANON_KEY="your-anon-key"
-
-# Sahakar Smart Clinic Integration (Optional Future Proofing)
+# Optional future proofing
 SAHAKAR_API_KEY="your-api-key"
-6. Prisma Initialization (The Schema)
-Initialize Prisma to connect your code to your Supabase PostgreSQL database:
-code
-Bash
+```
+
+---
+
+## 6. Prisma Initialization
+
+Initialize Prisma to connect your code to the Neon (Serverless PostgreSQL) database:
+
+```bash
 npx prisma init
-Important: When running migrations (`npx prisma migrate dev`), use the `DIRECT_URL` environment variable.
-The `DATABASE_URL` (transaction mode with Supavisor pooling) is used at runtime.
-Next step: Copy the Prisma Schema code I provided in the Technical Architecture section into your prisma/schema.prisma file.
-7. Version Control & Deployment Setup
-GitHub: Create a private repository named nams-web.
-Push Code:
-code
-Bash
+```
+
+> **Important:** When running migrations (`npx prisma migrate dev`), Prisma uses the `DIRECT_URL`. The `DATABASE_URL` (with Neon built-in pooling) is used at runtime only.
+
+Copy the Prisma schema from [Technical Architecture Design §2.2](./Technical%20Architecture%20Design.md#22-prisma-schema) into `prisma/schema.prisma`.
+
+After copying the schema, push it to Neon:
+
+```bash
+npx prisma db push
+```
+
+---
+
+## 7. Version Control & Deployment Setup
+
+### GitHub
+
+```bash
 git add .
 git commit -m "Initial NAMS setup with Shadcn and Prisma"
 git remote add origin <your-github-url>
 git push -u origin main
-Vercel:
-Go to Vercel.com and click "Add New Project."
-Import your nams-web repository.
-Add your .env variables into the Vercel Project Settings.
-Click Deploy.
-8. Pro-Tip: Data Migration Environment
-Since you are moving data from Google Sheets, create a folder called scripts/ in your root.
-Place your CSV export of the current data there.
-Later, we will create a migrate.ts file here to "bulk upload" Sreeraj, Bebi Anitha, and others into your new NAMS system.
+```
+
+### Vercel
+
+1. Go to [vercel.com](https://vercel.com) and click **"Add New Project"**
+2. Import your `nams-web` repository
+3. Add all `.env` variables into **Vercel Project Settings → Environment Variables**
+4. Click **Deploy**
+
+> Vercel automatically provisions an SSL certificate (HTTPS) on deployment.
+
+---
+
+## 8. Data Migration Environment
+
+Since historical data must be moved from Google Sheets:
+
+1. Create a `scripts/` folder in the project root
+2. Place the CSV export of the current Google Sheets data there (`legacy_data.csv`)
+3. The migration script (`scripts/migrate.ts`) will be built during the [Data Migration](./Data%20Migration.md) phase
+
+> Full migration plan and script: [Data Migration.md](./Data%20Migration.md)
