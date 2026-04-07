@@ -6,7 +6,8 @@ import { lookupPatientByPhone, createOrUpdatePatient } from "@/lib/actions/patie
 import { createAssessment } from "@/lib/actions/assessments";
 import { calculateBMI, getBMICategory, getBMIColor } from "@/lib/utils/bmi-calculator";
 import { getReferenceRange, getLabStatus, type Gender } from "@/lib/utils/lab-reference-ranges";
-import { User, Activity, FlaskConical, ClipboardList, ChevronRight, ChevronLeft, Check } from "lucide-react";
+import { User, Activity, FlaskConical, ClipboardList, ChevronRight, ChevronLeft, Check, Info, AlertCircle, Lightbulb } from "lucide-react";
+import { cn } from "@/lib/cn";
 import type { Outlet, MasterTest } from "@prisma/client";
 
 type Props = {
@@ -396,7 +397,7 @@ function Step2Vitals({
 function Step3Tests({
   testsByCategory, selectedTests, toggleTest, updateTestValue, openCategories, setOpenCategories, gender,
 }: {
-  testsByCategory: Record<string, { id: string; name: string; category: string; isActive: boolean }[]>;
+  testsByCategory: Record<string, MasterTest[]>;
   selectedTests: { name: string; value?: string }[];
   toggleTest: (name: string) => void;
   updateTestValue: (name: string, value: string) => void;
@@ -404,6 +405,8 @@ function Step3Tests({
   setOpenCategories: (fn: (prev: Record<string, boolean>) => Record<string, boolean>) => void;
   gender: Gender;
 }) {
+  const [showInfo, setShowInfo] = useState<string | null>(null);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -440,43 +443,105 @@ function Step3Tests({
                 </button>
                 {openCategories[category] && (
                   <div className="border-t border-slate-100 px-4 py-3">
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {activeTests.map((test) => {
                         const selected = selectedTests.find(st => st.name === test.name);
-                        const ref = getReferenceRange(test.name, gender);
-                        const status = selected?.value ? getLabStatus(selected.value, test.name, gender) : null;
+                        const isFemale = gender === "FEMALE";
+                        const min = isFemale ? test.femaleMin : test.maleMin;
+                        const max = isFemale ? test.femaleMax : test.maleMax;
+                        
+                        const val = parseFloat(selected?.value || "");
+                        const isLow = !isNaN(val) && min !== null && val < min;
+                        const isHigh = !isNaN(val) && max !== null && val > max;
 
                         return (
                           <div key={test.id} className="space-y-2">
-                            <label className="flex cursor-pointer items-center gap-2.5 rounded py-1">
-                              <input
-                                type="checkbox"
-                                checked={!!selected}
-                                onChange={() => toggleTest(test.name)}
-                                className="h-4 w-4 rounded border-slate-300 text-teal-600 accent-teal-600"
-                              />
-                              <span className="text-sm font-medium text-slate-700">{test.name}</span>
-                            </label>
+                            <div className="flex items-center justify-between group">
+                              <label className="flex cursor-pointer items-center gap-2.5 rounded py-1 flex-1">
+                                <input
+                                  type="checkbox"
+                                  checked={!!selected}
+                                  onChange={() => toggleTest(test.name)}
+                                  className="h-4 w-4 rounded border-slate-300 text-teal-600 accent-teal-600"
+                                />
+                                <span className="text-sm font-medium text-slate-700">{test.name}</span>
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => setShowInfo(showInfo === test.id ? null : test.id)}
+                                className="p-1 text-slate-400 hover:text-teal-600 transition-colors"
+                              >
+                                <Info className="h-4 w-4" />
+                              </button>
+                            </div>
 
-                            {selected && ref && (
-                              <div className="ml-7 flex flex-wrap items-center gap-3">
-                                <div className="flex items-center gap-2">
-                                  <input
-                                    type="number"
-                                    step="0.01"
-                                    value={selected.value || ""}
-                                    onChange={(e) => updateTestValue(test.name, e.target.value)}
-                                    placeholder="Value"
-                                    className="w-24 rounded-md border border-slate-200 px-2 py-1 text-sm bg-white"
-                                  />
-                                  <span className="text-xs text-slate-400">{ref.unit}</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-xs">
-                                  <span className="text-slate-400">Ref: {ref.activeRange.min}-{ref.activeRange.max}</span>
-                                  {status && status.status !== "NONE" && (
-                                    <span className={`font-bold ${status.color}`}>{status.label}</span>
+                            {selected && (
+                              <div className="ml-7 space-y-3">
+                                <div className="flex flex-wrap items-center gap-3">
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      value={selected.value || ""}
+                                      onChange={(e) => updateTestValue(test.name, e.target.value)}
+                                      placeholder="Value"
+                                      className={cn(
+                                        "w-24 rounded-md border px-2 py-1 text-sm bg-white focus:outline-none focus:ring-2",
+                                        isLow ? "border-blue-300 focus:ring-blue-100" : 
+                                        isHigh ? "border-red-300 focus:ring-red-100" : 
+                                        "border-slate-200 focus:ring-teal-100"
+                                      )}
+                                    />
+                                    <span className="text-xs text-slate-400 font-bold">{test.unit || "—"}</span>
+                                  </div>
+                                  
+                                  {min !== null && max !== null && (
+                                    <div className="flex items-center gap-2 text-[11px] font-bold">
+                                      <span className="text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">Ref: {min}-{max}</span>
+                                      {isLow && <span className="text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded flex items-center gap-1"><AlertCircle className="h-3 w-3" /> LOW</span>}
+                                      {isHigh && <span className="text-red-600 bg-red-50 px-1.5 py-0.5 rounded flex items-center gap-1"><AlertCircle className="h-3 w-3" /> HIGH</span>}
+                                      {!isNaN(val) && !isLow && !isHigh && <span className="text-green-600 bg-green-50 px-1.5 py-0.5 rounded">NORMAL</span>}
+                                    </div>
                                   )}
                                 </div>
+
+                                {(isLow || isHigh) && (
+                                  <div className={cn(
+                                    "rounded-lg p-3 text-xs space-y-2 border animate-in fade-in slide-in-from-top-1 duration-200",
+                                    isLow ? "bg-blue-50/50 border-blue-100 text-blue-800" : "bg-red-50/50 border-red-100 text-red-800"
+                                  )}>
+                                    <div className="flex gap-2">
+                                      <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                                      <div>
+                                        <p className="font-bold uppercase tracking-wider text-[10px] mb-0.5">Clinical Implication</p>
+                                        <p>{isLow ? test.lowImplication : test.highImplication || "Result is outside normal range."}</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-2 pt-2 border-t border-current/10">
+                                      <Lightbulb className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                                      <div>
+                                        <p className="font-bold uppercase tracking-wider text-[10px] mb-0.5">Management Advice</p>
+                                        <p>{isLow ? test.lowAdvice : test.highAdvice || "Please consult a medical professional."}</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {showInfo === test.id && (
+                              <div className="ml-7 rounded-xl bg-slate-900 text-white p-4 text-xs space-y-3 shadow-xl animate-in zoom-in-95 duration-200">
+                                <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                                  <span className="font-bold uppercase tracking-widest text-slate-400">About {test.name}</span>
+                                  <button onClick={() => setShowInfo(null)}><X className="h-3 w-3" /></button>
+                                </div>
+                                <p className="leading-relaxed opacity-90 italic">&quot;{test.description || "No detailed description available."}&quot;</p>
+                                {test.procedure && (
+                                  <div className="pt-2">
+                                    <p className="font-bold text-teal-400 mb-1 uppercase tracking-tighter">Collection Procedure</p>
+                                    <p className="opacity-80">{test.procedure}</p>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>

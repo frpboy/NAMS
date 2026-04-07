@@ -28,6 +28,17 @@ export async function createMasterTest(data: {
   name: string;
   category: string;
   isActive?: boolean;
+  unit?: string | null;
+  description?: string | null;
+  maleMin?: number | null;
+  maleMax?: number | null;
+  femaleMin?: number | null;
+  femaleMax?: number | null;
+  lowImplication?: string | null;
+  highImplication?: string | null;
+  lowAdvice?: string | null;
+  highAdvice?: string | null;
+  procedure?: string | null;
 }) {
   const result = masterTestSchema.safeParse(data);
   if (!result.success) {
@@ -40,7 +51,22 @@ export async function createMasterTest(data: {
 
 export async function updateMasterTest(
   id: string,
-  data: { name: string; category: string; isActive?: boolean }
+  data: {
+    name: string;
+    category: string;
+    isActive?: boolean;
+    unit?: string | null;
+    description?: string | null;
+    maleMin?: number | null;
+    maleMax?: number | null;
+    femaleMin?: number | null;
+    femaleMax?: number | null;
+    lowImplication?: string | null;
+    highImplication?: string | null;
+    lowAdvice?: string | null;
+    highAdvice?: string | null;
+    procedure?: string | null;
+  }
 ) {
   const result = masterTestSchema.safeParse(data);
   if (!result.success) {

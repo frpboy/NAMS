@@ -1,37 +1,43 @@
 ... (previous content) ...
 
-## 2026-04-08 ~22:30 — Legacy Data Migration
+## 2026-04-08 ~23:45 — Data Integrity, Layout Fixes & Admin Access
 
 ### Problem
-Historical clinical data (500+ records) was stored in Google Sheets and needed to be imported into the NAMS Neon database while adhering to the new structured data models and strict uniqueness constraints.
+1. **Data Redundancy:** Multiple duplicate and overlapping lab tests (e.g., "HB" vs "Hemoglobin") were causing confusion in the assessment flow.
+2. **Sync Issues:** Updated clinical descriptions were intermittently failing to appear in the app due to server-side caching and outdated Prisma Client generation.
+3. **Layout Regression:** A flexbox conflict in `SidebarContainer` created a large unused white gap on the dashboard and other pages.
+4. **Access Request:** Need for a dedicated main administrative account for Sahakar Clinic.
 
 ### Changes Made
 
-**Migration Script (`src/scripts/import-legacy.ts`)**
-- Developed a robust TypeScript migration script using Prisma.
-- Implemented **Data Normalization**:
-  - `selectedTests` (string array) transformed to the new object format `{ name: string, value: "" }`.
-  - Empty `place`, `occupation`, and `remarks` (often "." in legacy data) converted to `null` or "Unknown".
-  - `needsDietPlan` normalized to the standard "Yes"/"No"/"Maybe" labels.
-- Implemented **Constraint Handling**:
-  - Generated unique 10-digit placeholders (e.g., `0000000001`) for patients missing contact numbers to satisfy the database uniqueness requirement.
-  - Used `upsert` for patients to prevent duplicate record creation across multiple assessments for the same individual.
-- Preserved historical timestamps by mapping the original spreadsheet timestamp to `createdAt` and `updatedAt`.
+**Database Cleanup & Data Quality**
+- Executed `TRUNCATE TABLE "MasterTest" RESTART IDENTITY` to perform a clean sweep of redundant parameters.
+- Refined `seed.ts` to strictly exclude abbreviations (HB, FBS, PPBS, LFT, etc.) in favor of full clinical names with rich data.
+- Successfully re-seeded **38 unique, rich lab parameters**.
+- Updated `seed.ts` to remove automatic outlet creation, as real outlets are now managed via the production UI.
 
-**Tooling**
-- Added `npm run db:import` script to `package.json` for easy execution.
+**Layout & UI Optimization**
+- Resolved the "Half-page Blank" issue: Refactored `SidebarContainer` to wrap `children` directly and consolidated it into `ProtectedLayout`.
+- Standardized `main` content padding to react dynamically to the sidebar's collapse state, ensuring full-width utilization of the screen.
+- Fixed placeholder helptext in the Tests Edit page to ensure actual data values are displayed in the form fields.
 
-## Migration Verification
+**Caching & Performance**
+- Forced dynamic rendering (`export const dynamic = "force-dynamic"`) on `TestsPage` and `NewAssessmentPage` to guarantee that clinical data updates are reflected immediately without browser/server caching delays.
 
-| Metric | Value |
+**Account Management**
+- Provisioned a new master admin account: `sahakarsmartclinic@gmail.com`.
+- Updated seed script to ensure this user persists across environment resets.
+
+## Build Verification
+
+| Check | Result |
 |---|---|
-| Total Records Processed | 508 |
-| Successfully Imported | 508 |
-| Failures/Errors | 0 |
-| Data Consistency | ✅ Verified (Tests transformed to objects) |
+| MasterTest Count | ✅ 38 Unique Parameters (No duplicates) |
+| Layout Alignment | ✅ Full width content (No empty gaps) |
+| Data Freshness | ✅ Verified (Force-dynamic enabled) |
+| Admin Access | ✅ Sahakar Admin account active |
 
 ## Next Steps
-- [x] Implement Phase 5: Google Sheets CSV migration script (Completed via JSON)
 - [ ] Add assessment detail/edit view (`/assessment/[id]`)
 - [ ] Add loading skeletons for patient lookup
 - [ ] Add toast notifications for success/error feedback

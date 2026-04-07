@@ -5,6 +5,7 @@
 
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { LAB_TESTS } from "../src/lib/utils/lab-reference-ranges";
 
 const prisma = new PrismaClient();
 
@@ -26,6 +27,20 @@ async function main() {
   });
   console.log(`✅ Admin created: ${admin.email}`);
 
+  // ─── Create Main Sahakar Admin ────────────────────────────────
+  const mainAdminPassword = await bcrypt.hash("Zabnix@2025", 10);
+  const mainAdmin = await prisma.user.upsert({
+    where: { email: "sahakarsmartclinic@gmail.com" },
+    update: {},
+    create: {
+      name: "Sahakar Admin",
+      email: "sahakarsmartclinic@gmail.com",
+      password: mainAdminPassword,
+      role: "ADMIN",
+    },
+  });
+  console.log(`✅ Main Admin created: ${mainAdmin.email}`);
+
   // ─── Create Nutritionist User ─────────────────────────────────
   const nutriPassword = await bcrypt.hash("sscdt@2026", 10);
 
@@ -41,109 +56,86 @@ async function main() {
   });
   console.log(`✅ Nutritionist created: ${nutritionist.email}`);
 
-  // ─── Create Sahakar Smart Clinic Outlets ──────────────────────
-  const outletNames = [
-    "Makkaraparamba",
-    "Manjeri",
-    "Calicut",
-    "Malappuram",
-    "Kondotty",
-  ];
-
-  const outlets = [];
-  for (const name of outletNames) {
-    const outlet = await prisma.outlet.upsert({
-      where: { name },
-      update: {},
-      create: { name },
-    });
-    outlets.push(outlet);
-    console.log(`✅ Outlet created: ${outlet.name}`);
-  }
-
-  // ─── Create Legacy/Imported Outlet ────────────────────────────
-  const legacyOutlet = await prisma.outlet.upsert({
+  // NOTE: Outlets are managed manually in the UI.
+  await prisma.outlet.upsert({
     where: { name: "Legacy/Imported" },
     update: {},
     create: { name: "Legacy/Imported" },
   });
-  console.log(`✅ Legacy outlet created: ${legacyOutlet.name}`);
 
-  // ─── Create Master Test List ──────────────────────────────────
-  const testCategories: Record<string, string[]> = {
-    "General Health": [
-      "CBC",
-      "ESR",
-      "HB",
-      "RBC",
-      "WBC",
-      "Platelet Count",
-      "PCV",
-    ],
-    "Metabolic / Sugar": [
-      "FBS",
-      "PPBS",
-      "HBA1C",
-      "GTT",
-      "Random Blood Sugar",
-    ],
-    "Organ Function": [
-      "LFT",
-      "RFT",
-      "Lipid Profile",
-      "UREA",
-      "Creatinine",
-      "SGOT",
-      "SGPT",
-      "Albumin (Serum)",
-      "TSH",
-    ],
-    "Vitamins & Minerals": [
-      "Vitamin D",
-      "Vitamin B12",
-      "Iron Studies",
-      "Calcium",
-      "Ferritin",
-      "Zinc",
-    ],
-    "Urine": [
-      "Urine Albumin",
-      "Urine Creatinine",
-      "Albumin Creatinine Ratio",
-      "Urine Routine",
-      "Urine Culture",
-    ],
-    "Cardiac": [
-      "Troponin",
-      "BNP",
-      "D-Dimer",
-      "CRP",
-      "Homocysteine",
-    ],
+  // ─── Create Master Test List from Clinical Data ────────────────
+  console.log("📊 Seeding Master Tests with Clinical Data...");
+  
+  let testCount = 0;
+  for (const test of LAB_TESTS) {
+    const maleRange = test.ranges.find(r => r.gender === "MALE") || test.ranges[0];
+    const femaleRange = test.ranges.find(r => r.gender === "FEMALE") || test.ranges[0];
+
+    await prisma.masterTest.upsert({
+      where: { name: test.name },
+      update: {
+        category: test.category,
+        unit: test.unit,
+        description: test.description,
+        maleMin: maleRange.min,
+        maleMax: maleRange.max,
+        femaleMin: femaleRange.min,
+        femaleMax: femaleRange.max,
+        lowImplication: test.lowImplication,
+        highImplication: test.highImplication,
+        lowAdvice: test.lowAdvice,
+        highAdvice: test.highAdvice,
+        procedure: test.procedure,
+      },
+      create: {
+        name: test.name,
+        category: test.category,
+        isActive: true,
+        unit: test.unit,
+        description: test.description,
+        maleMin: maleRange.min,
+        maleMax: maleRange.max,
+        femaleMin: femaleRange.min,
+        femaleMax: femaleRange.max,
+        lowImplication: test.lowImplication,
+        highImplication: test.highImplication,
+        lowAdvice: test.lowAdvice,
+        highAdvice: test.highAdvice,
+        procedure: test.procedure,
+      },
+    });
+    testCount++;
+  }
+
+  // Add remaining specific tests from original list that don't have rich data yet
+  // Abbreviations are EXCLUDED to prevent duplication
+  const legacyTests: Record<string, string[]> = {
+    "General Health": ["CBC", "ESR", "RBC", "PCV"],
+    "Metabolic / Sugar": ["GTT", "Random Blood Sugar"],
+    "Organ Function": ["LFT", "RFT", "Lipid Profile", "SGOT", "Albumin (Serum)"],
+    "Vitamins & Minerals": ["Iron Studies", "Calcium", "Zinc"],
+    "Urine": ["Urine Albumin", "Urine Creatinine", "Albumin Creatinine Ratio", "Urine Routine", "Urine Culture"],
+    "Cardiac": ["Troponin", "BNP", "D-Dimer", "CRP", "Homocysteine"],
   };
 
-  let testCount = 0;
-  for (const [category, tests] of Object.entries(testCategories)) {
+  for (const [category, tests] of Object.entries(legacyTests)) {
     for (const testName of tests) {
-      await prisma.masterTest.upsert({
-        where: { name: testName },
-        update: {},
-        create: {
-          name: testName,
-          category,
-          isActive: true,
-        },
-      });
-      testCount++;
+      const existing = await prisma.masterTest.findUnique({ where: { name: testName } });
+      if (!existing) {
+        await prisma.masterTest.create({
+          data: {
+            name: testName,
+            category,
+            isActive: true,
+          }
+        });
+        testCount++;
+      }
     }
-    console.log(`✅ Tests in "${category}": ${tests.length}`);
   }
-  console.log(`✅ Total tests seeded: ${testCount}`);
 
+  console.log(`✅ Total unique tests seeded: ${testCount}`);
   console.log("\n🎉 Seeding complete!");
-  console.log("\n📋 Login Credentials:");
-  console.log(`   Admin:        frpboy12@gmail.com / Zabnix@2025`);
-  console.log(`   Nutritionist: sahakarsmartclinicdt@gmail.com / sscdt@2026`);
 }
 
 main()

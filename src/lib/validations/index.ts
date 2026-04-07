@@ -57,6 +57,17 @@ export const masterTestSchema = z.object({
   name: z.string().min(1, "Test name is required").trim(),
   category: z.string().min(1, "Category is required").trim(),
   isActive: z.boolean().default(true),
+  unit: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  maleMin: z.coerce.number().optional().nullable(),
+  maleMax: z.coerce.number().optional().nullable(),
+  femaleMin: z.coerce.number().optional().nullable(),
+  femaleMax: z.coerce.number().optional().nullable(),
+  lowImplication: z.string().optional().nullable(),
+  highImplication: z.string().optional().nullable(),
+  lowAdvice: z.string().optional().nullable(),
+  highAdvice: z.string().optional().nullable(),
+  procedure: z.string().optional().nullable(),
 });
 
 // ─── User Validation ─────────────────────────────────────────────
