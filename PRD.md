@@ -1,71 +1,76 @@
-Product Requirements Document (PRD):  Nutrition Assessment Management System
-1. Problem Statement
-The "Google Form" Bottleneck:
-Currently, the organization manages nutrition assessments across 5 outlets using standard Google Forms. This process creates three core business problems:
-High Cognitive Load & Error Risk: Nutritionists must manually scroll through a massive list of 50+ lab tests and manually calculate BMI, leading to data entry fatigue and potential calculation errors.
-Reporting Friction: Generating outlet-wise, date-wise, or patient-specific reports requires manual filtering in Google Sheets, which is time-consuming and prevents real-time business insights.
-Data Fragmentation: There is no centralized "Patient Profile." To see a patient’s history, the nutritionist must search through rows of spreadsheet data rather than a dedicated digital health record.
+Product Requirements Document (PRD): NAMS
+Project Name: Nutrition Assessment Management System (NAMS)
+Status: Initial Draft
+Target Platform: Web (Next.js / Vercel)
+1. Problem/Opportunity
+The Problem:
+Currently, the nutrition add-on service for Sahakar Smart Clinic is managed via generic Google Forms. This results in three major inefficiencies:
+Administrative Friction: Data is "static." Nutritionists have to re-enter patient details for every visit, even for returning clients, and manually calculate BMI.
+Lack of Scalability: As the number of outlets grows beyond the current five, managing a list of hardcoded clinics and a massive, unorganized list of lab tests in a form becomes unmanageable.
+Reporting Silos: Generating professional, patient-specific, or outlet-specific reports requires manual "data cleaning" in Excel. There is no automated way to export only the clinical data relevant to a specific patient.
+The Opportunity:
+By building NAMS, we provide a "Smart Clinical Layer." This system transforms the data collection from a passive form into an active clinical tool that remembers patients, automates calculations, and allows the Admin to scale the service across an unlimited number of Sahakar Smart Clinic locations.
 2. Target Users & Use Cases
-Persona	Key Use Cases
-Nutritionist	Entering new assessment data during consultations; reviewing previous patient history; generating a diet plan "Need" status.
-Admin	Monitoring data entry across all 5 outlets; exporting consolidated data for business analysis; auditing nutritionist entries.
+The Nutritionist:
+Use Case: Rapidly logs assessment data during or after a patient consultation.
+Need: Needs to see if a patient has been there before to avoid typing, needs auto-calculated BMI to save time, and needs to pick tests from organized categories.
+The Admin:
+Use Case: Onboards new staff and new clinic outlets. Updates the list of available medical tests.
+Need: Needs to generate "clean" reports for business analysis and audit the work across multiple locations.
 3. Current Journey
-Current Workflow:
-Nutritionist opens the Google Form link.
-Manually types patient details and height/weight.
-Manual Calculation: The nutritionist calculates BMI on a separate device and types it in.
-The "Long Scroll": Scans through a list of ~60 checkboxes to mark tests conducted.
-Submission: Data goes to a spreadsheet.
-Reporting: Admin manually opens Sheets, applies filters, and copies/pastes data to create a report.
-4. Proposed Solution: "NutriFlow Web App"
-Elevator Pitch:
-A dedicated Next.js web application that centralizes nutrition assessments across all 5 outlets. It replaces long-form scrolling with a categorized "Smart Form," automates BMI calculations, and provides a one-click reporting engine for instant data exports.
+Today:
+Patient completes a test at a Sahakar Smart Clinic.
+Data is shared with the Nutritionist.
+Nutritionist opens a Google Form.
+Nutritionist types the Contact Number, then manually types Name/Age/Sex (even if they know the patient).
+Nutritionist uses a calculator to find the BMI.
+Nutritionist scrolls through 60+ unsorted checkboxes to find the 3-4 tests conducted.
+Submission goes to a flat Google Sheet.
+Admin manually filters the sheet to create a report.
+4. Proposed Solution / Elevator Pitch
+NAMS (Nutrition Assessment Management System) is a purpose-built clinical ERP for nutritionists. It features a "Smart-Lookup" entry system that auto-fills patient history, an "Auto-Calc" biometric engine, and a "Dynamic Settings" panel for managing an expanding list of outlets and lab tests.
 Top 3 MVP Value Props:
-Smart Stepper Form: Breaks the 60+ fields into logical categories (Personal, Biometrics, Lab Tests, Clinical Notes).
-Instant Analytics & Filters: Real-time dashboard to filter by Outlet, Date, or Patient.
-One-Click Export: Native Excel/PDF generation based on filtered views.
+Instant Recall: Enter a phone number; get the patient's identity and history immediately.
+Clean Export Engine: Generate Excel/PDF reports that only show the tests conducted, not a sea of empty checkboxes.
+Dynamic Scaling: Add new outlets and test categories on the fly without touching code.
 5. Goals/Measurable Outcomes
-Reduced Entry Time: Decrease the time taken to log a full assessment by 40% through UI grouping and auto-calcs.
-Zero Calculation Errors: 100% accuracy in BMI reporting via system automation.
-Reporting Speed: Reduce the time to generate a monthly outlet report from ~30 minutes to <10 seconds.
-6. Functional Requirements (MVP)
-[P0] Data Entry & Management
-Multi-step Assessment Form:
-Step 1: Patient Info (Name, Age, Sex, Contact, Occupation, Place, Outlet Selection).
-Step 2: Biometrics (Height, Weight, Auto-calculated BMI).
-Step 3: Lab Tests (Categorized checkboxes for CBC, LFT, RFT, Lipid, Thyroid, etc.).
-Step 4: Clinical Notes (Interaction, Variation, Diet, Remarks).
-Outlet Tagging: Every entry must be tagged to one of the 5 specific outlets.
-Authentication: Secure login for Nutritionists and Admins.
-[P1] Review & Search
-Centralized Dashboard: A searchable table of all entries.
-Advanced Filtering: Ability to filter the list by:
-Date Range (From - To).
-Outlet Name.
-Patient Name/Contact Number.
-Detail View: Click an entry to view the full assessment in a clean, readable layout (unlike a spreadsheet row).
-[P2] Exporting & Telemetry
-Global Export: Button to download the entire database to .xlsx.
-Filtered Export: Button to download only the current filtered view (e.g., "Outlet A" records for "March").
-Audit Trail: System logs which user created/edited an entry.
-7. Design Mockups (Conceptual)
-A. The Dashboard (Home)
-Top Bar: Summary cards showing "Total Assessments Today," "Total Patients," and "Outlet-wise Breakdown."
-Main Area: A high-density data table with columns: Date, Patient Name, Outlet, BMI, and "Diet Plan Needed (Yes/No)."
-Action Sidebar: Quick filters for Outlet and Date.
-B. The "Smart Form" (Assessment)
-Header: Progress bar (Info -> Biometrics -> Labs -> Notes).
-Lab Section: Instead of one long list, use "Tabs" or "Accordions":
-General: CBC, Hemoglobin, etc.
-Organ Function: LFT, RFT.
-Metabolic: Lipid, Sugar, Thyroid.
-Vitamins/Other: Vit D, B12, etc.
+Efficiency: Reduce the "Time-to-Entry" for a return patient by 60% via auto-fill.
+Accuracy: Eliminate 100% of human error in BMI calculations.
+Reporting: Reduce the time to generate a monthly outlet-wise report from 1 hour to 1 click.
+6. MVP / Functional Requirements
+[P0] User & Outlet Management
+User Management: Admin can create, edit, and deactivate Nutritionist accounts.
+Dynamic Outlets: Admin can add/edit clinic outlet names (e.g., "Outlet 6 - Calicut"). These appear in the nutritionist's dropdown.
+RBAC: Secure login for both roles.
+[P1] The Smart Assessment Form
+Patient Lookup: Upon entering a 10-digit contact number, the system queries the database. If found, it pre-fills: Name, Age, Sex, Occupation, and Place.
+Automated Biometrics:
+Inputs: Height (cm), Weight (kg).
+Automatic Output: BMI (Height/Weight formula) displayed in real-time.
+Categorized Lab Tests:
+Admin can group tests (e.g., "Liver Function" contains SGOT, SGPT).
+Nutritionist sees an accordion/tabbed view of tests, making the long list easy to navigate.
+Date-Time Pickers: Professional selectors for "Result Received" and "Patient Interaction."
+[P2] Data Migration & Reporting
+Legacy Data Importer: A tool for the Admin to upload the existing Google Sheets data (CSV) to ensure no patient history is lost.
+Selective Exporting:
+Full Export: Excel file of all records.
+Filtered Export: Ability to filter by Outlet, Date Range, or Customer.
+Dynamic Columns: The Excel output for "Tests Conducted" should only list the tests that were actually selected for those patients (no empty columns).
+7. Design Concepts (Mockups)
+Dashboard: A high-level view showing the number of assessments done per outlet this month.
+Entry Stepper:
+Step 1: Identity (Phone number search).
+Step 2: Vitals (Height/Weight -> BMI).
+Step 3: Lab Results (Categorized checkboxes).
+Step 4: Consultation (Diet plan, Remarks, Need for Diet Plan dropdown).
+Admin Settings: Two tables—one for managing "Clinic Outlets" and one for managing "Test Master List" (with Category grouping).
 8. Success Metrics (KPIs)
-Form Completion Rate: 100% (Ensuring no required fields are skipped via form validation).
-Usage Frequency: Daily active use by nutritionists at all 5 locations.
-Export Utilization: Number of reports generated by Admin per month.
-9. Launch Criteria
-Data Accuracy: BMI calculation logic verified against manual clinical standards.
-Cross-Device Compatibility: Form must be usable on both Tablets and Desktops.
-Security: Database encrypted; password-protected access only.
-Deployment: Successfully hosted on a production URL with SSL.
+Active Outlets: Successful data logging from all currently active outlets.
+Return Patient Rate: Percentage of entries where "Auto-fill" was utilized.
+Report Accuracy: Admin confirmation that exported reports require zero manual formatting.
+9. Appendix
+Tech Stack: Next.js 14 (App Router), Prisma ORM, PostgreSQL, Tailwind CSS + Shadcn UI.
+Deployment: Hosted on Vercel for high availability and easy scaling.
+Data Integrity: Phone number serves as the Unique Identifier (UID) for patients.
+Migration Note: The historical data cleaning will involve converting any "N/A" or "." values in the Google Sheet into proper Null/Zero values for the database.
