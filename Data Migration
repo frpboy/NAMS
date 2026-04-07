@@ -1,0 +1,79 @@
+Data Migration is the most sensitive part of this project. You have a wealth of historical data (Sreeraj, Deepa, Muhammed Ijas, etc.) that must be moved from your Google Sheets into the NAMS PostgreSQL database without losing any clinical history.
+Here is the 5-step technical plan to build "The Bridge."
+1. Data Extraction & Cleanup
+The Source: Export your current Google Sheet as a .csv file named legacy_data.csv.
+The Cleanup Rules:
+Unique Identifier: Use the Contact Number as the primary key. If a number appears in multiple rows (like "Muhammed Kutty"), the script will create one Patient record and multiple Assessment records linked to them.
+Normalization: Convert "Male/female/Male " into a standard MALE or FEMALE enum.
+Empty Values: Convert all . or nil values found in the OCR into null in the database to keep the data "clean."
+2. Field Mapping Table
+We will map your current spreadsheet columns to the new NAMS database structure:
+Google Sheet Column	NAMS Database Target	Transformation Logic
+NAME, AGE, SEX	Patient.name, age, sex	Standard string/int conversion.
+CONTACT NUMBER	Patient.contactNumber	Remove spaces/dashes; ensure 10 digits.
+PLACE, OCCUPATION	Patient.place, occupation	Standard string.
+DATE	Assessment.date	Parse "26/02/2026" into ISO DateTime.
+NAMES OF TEST...	Assessment.selectedTests	String to JSON: Split "cbc, lft" into ["cbc", "lft"].
+HIGHT, WEIGHT	Assessment.height / weight	Convert to Float.
+BMI	Assessment.bmi	Recalculate: weight / (height/100)^2 for accuracy.
+DIET, VARIATION...	Assessment.dietPlanNotes...	Map to corresponding Text areas.
+3. The Migration Script (TypeScript)
+We will create a script in /scripts/migrate.ts that uses Prisma to push the data.
+code
+TypeScript
+// Simplified logic for the NAMS Bridge script
+import { PrismaClient } from '@prisma/client';
+import csv from 'csv-parser';
+import fs from 'fs';
+
+const prisma = new PrismaClient();
+
+async function migrate() {
+  const results: any[] = [];
+
+  fs.createReadStream('legacy_data.csv')
+    .pipe(csv())
+    .on('data', (data) => results.push(data))
+    .on('end', async () => {
+      for (const row of results) {
+        // 1. Create or Update Patient (Upsert)
+        const patient = await prisma.patient.upsert({
+          where: { contactNumber: row['CONTACT NUMBER'] },
+          update: {},
+          create: {
+            name: row['NAME'],
+            age: parseInt(row['AGE']),
+            sex: row['SEX'].toUpperCase().trim(),
+            contactNumber: row['CONTACT NUMBER'],
+            place: row['PLACE'],
+          },
+        });
+
+        // 2. Create the Assessment linked to that Patient
+        await prisma.assessment.create({
+          data: {
+            patientId: patient.id,
+            outletId: "LEGACY_OUTLET_ID", // Assign a default ID for old data
+            height: parseFloat(row['HIGHT']) || 0,
+            weight: parseFloat(row['WEIGHT']) || 0,
+            bmi: calculateBMI(row['HIGHT'], row['WEIGHT']),
+            selectedTests: row['NAMES OF TEST CONDUCTED'].split(',').map((s: string) => s.trim()),
+            dietPlanNotes: row['DIET'],
+            variationResults: row['VARIATION IN RESULTS'],
+            // ... more mapping
+          }
+        });
+      }
+      console.log("Migration Complete!");
+    });
+}
+4. Edge Case Handling
+The "Unknown" Outlet: Your old data doesn't specify which of the 5 outlets the test was done at.
+Solution: We will create a special Outlet named "Legacy/Imported" so you can filter these specifically in your reports.
+Duplicate Entries: If a nutritionist submitted a form twice for the same interaction, the script will look at the Timestamp to skip exact duplicates.
+Missing Biometrics: For rows where height/weight are missing (like the early 2026 rows), the system will set BMI to 0 and allow the nutritionist to update it later if they have the records.
+5. Verification & Audit
+After running the bridge, we perform a Data Audit:
+Count Check: Does the Google Sheet have 450 rows? Does NAMS have 450 assessments?
+Lookup Check: Search for "Sreeraj" or "Deepa" in the new NAMS Search Bar. Ensure their entire history (tests, variations, dates) appears correctly.
+Export Check: Try to export a report for "February 2026" from NAMS and compare it to the old Google Sheet.
