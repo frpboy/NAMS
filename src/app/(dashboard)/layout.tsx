@@ -16,7 +16,7 @@ export default async function DashboardLayout({
       {/* Sidebar */}
       <aside className="fixed left-0 top-0 h-screen w-60 border-r border-border bg-white">
         <div className="flex h-14 items-center border-b border-border px-5">
-          <span className="text-lg font-bold text-primary">NAMS</span>
+          <img src="/logo.svg" alt="NAMS" className="h-8 w-auto" />
         </div>
 
         <nav className="space-y-0.5 p-3">

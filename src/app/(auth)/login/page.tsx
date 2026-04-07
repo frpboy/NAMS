@@ -40,11 +40,8 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted px-4">
       <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-lg">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-primary">NAMS</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Nutrition Assessment Management System
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <img src="/logo.svg" alt="NAMS" className="mx-auto h-12 w-auto" />
+          <p className="mt-3 text-xs text-muted-foreground">
             Sahakar Smart Clinic
           </p>
         </div>

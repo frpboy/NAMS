@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 232 48" fill="none">
+  <!-- Icon -->
+  <rect width="48" height="48" rx="10" fill="#0d9488"/>
+  <path d="M 10 9 L 10 39 L 15 39 L 15 15 L 33 39 L 38 39 L 38 9 L 33 9 L 33 33 L 15 9 Z" fill="white"/>
+  <!-- NAMS wordmark -->
+  <text x="60" y="22" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="20" font-weight="700" fill="#0d9488" letter-spacing="-0.4">NAMS</text>
+  <!-- Subtitle -->
+  <text x="61" y="38" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="9" font-weight="500" fill="#94a3b8" letter-spacing="0.8">NUTRITION ASSESSMENT</text>
+</svg>

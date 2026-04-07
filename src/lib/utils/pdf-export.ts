@@ -7,7 +7,7 @@ type AssessmentData = {
   sex: string;
   contactNumber: string;
   occupation?: string | null;
-  place: string;
+  place?: string | null;
   outletName: string;
   height: number;
   weight: number;
@@ -77,7 +77,7 @@ export function generatePatientPDF(data: AssessmentData): jsPDF {
     Sex: data.sex,
     Contact: data.contactNumber,
     Occupation: data.occupation || "—",
-    Place: data.place,
+    Place: data.place || "—",
     Outlet: data.outletName,
   });
 

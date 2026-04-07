@@ -1,0 +1,25 @@
+{
+  "name": "NAMS — Nutrition Assessment Management System",
+  "short_name": "NAMS",
+  "description": "Clinical ERP for Sahakar Smart Clinic nutritionists",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#0d9488",
+  "icons": [
+    {
+      "src": "/logo-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["health", "medical", "productivity"]
+}

@@ -3,7 +3,7 @@
  * Run with: npx ts-node --compiler-options '{"module":"CommonJS"}' prisma/seed.ts
  */
 
-import { PrismaClient, Role } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -12,31 +12,31 @@ async function main() {
   console.log("🌱 Seeding database...");
 
   // ─── Create Admin User ────────────────────────────────────────
-  const adminPassword = await bcrypt.hash("admin123", 10);
+  const adminPassword = await bcrypt.hash("Zabnix@2025", 10);
 
   const admin = await prisma.user.upsert({
-    where: { email: "admin@sahakarclinic.com" },
+    where: { email: "frpboy12@gmail.com" },
     update: {},
     create: {
-      name: "Admin User",
-      email: "admin@sahakarclinic.com",
+      name: "Rahul",
+      email: "frpboy12@gmail.com",
       password: adminPassword,
-      role: Role.ADMIN,
+      role: "ADMIN",
     },
   });
   console.log(`✅ Admin created: ${admin.email}`);
 
   // ─── Create Nutritionist User ─────────────────────────────────
-  const nutriPassword = await bcrypt.hash("nutri123", 10);
+  const nutriPassword = await bcrypt.hash("sscdt@2026", 10);
 
   const nutritionist = await prisma.user.upsert({
-    where: { email: "nutri@sahakarclinic.com" },
+    where: { email: "sahakarsmartclinicdt@gmail.com" },
     update: {},
     create: {
-      name: "Nutritionist User",
-      email: "nutri@sahakarclinic.com",
+      name: "Nifla",
+      email: "sahakarsmartclinicdt@gmail.com",
       password: nutriPassword,
-      role: Role.NUTRITIONIST,
+      role: "NUTRITIONIST",
     },
   });
   console.log(`✅ Nutritionist created: ${nutritionist.email}`);
@@ -142,8 +142,8 @@ async function main() {
 
   console.log("\n🎉 Seeding complete!");
   console.log("\n📋 Login Credentials:");
-  console.log(`   Admin:        admin@sahakarclinic.com / admin123`);
-  console.log(`   Nutritionist: nutri@sahakarclinic.com / nutri123`);
+  console.log(`   Admin:        frpboy12@gmail.com / Zabnix@2025`);
+  console.log(`   Nutritionist: sahakarsmartclinicdt@gmail.com / sscdt@2026`);
 }
 
 main()

@@ -8,6 +8,22 @@
 
 ---
 
+## Device Context & PWA
+
+NAMS is a **Progressive Web App (PWA)** designed **primarily for mobile and tablet use**. Nutritionists at Sahakar Smart Clinic enter assessments on their phones or clinic tablets — the app must work well at 375 px (iPhone SE) and 768 px (tablet) viewports. Desktop/PC use is also supported (nutritionists reviewing records, admins managing the system).
+
+| Context | Device | Priority |
+|---|---|---|
+| Assessment entry (at clinic) | Mobile / Tablet | **Primary** |
+| Dashboard review, export | PC / Desktop | Secondary |
+| Admin panel | Any | Secondary |
+
+All layouts use **mobile-first CSS** (min-width breakpoints). The stepper occupies full screen width on small devices; the sidebar collapses or hides on mobile.
+
+The app can be installed to the home screen via the PWA manifest (`display: standalone`, portrait orientation, teal theme). This avoids the browser chrome and feels like a native app.
+
+---
+
 ## Design Philosophy
 
 This design focuses on reducing **"Form Fatigue."** Instead of one long scrolling page, NAMS uses a **Progressive Disclosure** pattern (a Stepper) to help the Nutritionist focus on one data category at a time.

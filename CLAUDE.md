@@ -29,6 +29,19 @@ There are no tests yet. The plan calls for **Vitest** (unit) and **Playwright** 
 
 ---
 
+## PWA & Device Support
+
+NAMS is a **Progressive Web App (PWA)**. It is designed **primarily for mobile and tablet use** — nutritionists at Sahakar Smart Clinic typically enter assessments on phones or tablets at the clinic. Desktop/PC use is also fully supported.
+
+- `public/manifest.json` — `display: standalone`, `orientation: portrait-primary`
+- `theme_color: #0d9488` — teal chrome bar on Android
+- `src/app/icon.svg` — auto-detected favicon by Next.js App Router
+- `public/logo-icon.svg` — apple-touch-icon for iOS home screen
+
+When designing UI, **mobile-first** layouts take priority. The assessment stepper and dashboard must work well on a 375 px viewport.
+
+---
+
 ## Architecture
 
 ### Stack
