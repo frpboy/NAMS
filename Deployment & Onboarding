@@ -1,0 +1,46 @@
+
+This is the final stage where NAMS (Nutrition Assessment Management System) goes from a development project to a live clinical tool used across your Sahakar Smart Clinic outlets.
+1. Production Deployment (The "Launch")
+We will use Vercel for hosting because it is optimized for Next.js and offers high performance in India.
+Step 1: Database Provisioning:
+Initialize the production PostgreSQL database (Vercel Postgres or Supabase).
+Run npx prisma db push to create the tables in the live environment.
+Step 2: Environment Variables:
+Configure the production .env in the Vercel Dashboard (DATABASE_URL, NEXTAUTH_SECRET, APP_URL).
+Step 3: Custom Domain:
+Connect your professional domain (e.g., nams.sahakarclinic.com).
+Vercel automatically provisions an SSL certificate (HTTPS) for medical data security.
+Step 4: The Final Migration:
+Run the Migration Script one last time to pull the very latest data from your Google Sheets so the system starts with 100% up-to-date history.
+2. Admin Onboarding (The "Setup")
+Before the nutritionists log in, the Admin must configure the system's "Brain."
+Outlet Configuration: Admin logs in and adds the 5+ Sahakar Smart Clinic locations (Makkaraparamba, Manjeri, etc.).
+Test Master List: Admin categorizes the tests (e.g., Blood, Vitamins, Liver) to ensure the nutritionist sees an organized form.
+Nutritionist Accounts: Admin creates the initial login credentials for the staff at each outlet.
+3. Nutritionist Onboarding (The "Training")
+The goal is to show the nutritionists how NAMS makes their life easier compared to Google Forms.
+The "Speed" Training (30 Mins):
+The Lookup Advantage: Show how typing a phone number (e.g., 9633435228 for Deepa) brings up her whole history instantly.
+The BMI Cheat-Sheet: Show how the app calculates the BMI automatically, removing the need for a calculator.
+The Tabbed Form: Show how to quickly find tests like "HBA1C" or "Lipid Profile" within their categories.
+Device Setup:
+Help nutritionists "Add to Home Screen" on their tablets or mobile phones so NAMS looks and feels like a native app.
+Ensure browser auto-fill is disabled for clinical fields to prevent data entry errors.
+4. Post-Launch Hyper-Care (Week 1-2)
+In the first two weeks of NAMS being live:
+Daily Sync: A 5-minute check-in to see if any medical tests are missing from the Master List.
+Data Audit: Admin checks the first 50 entries to ensure BMI and Outlet tagging are 100% correct.
+The "Legacy" Cleanup: If any old patient data was imported with errors (e.g., misspelled names in Google Sheets), the nutritionist uses the "Edit Patient" feature to fix it.
+5. Growth & Scaling (Future Proofing)
+As Sahakar Smart Clinic adds more outlets:
+Outlet Expansion: Adding "Outlet 6" or "Outlet 10" takes exactly 10 seconds in the Admin panel.
+New Services: If you add a new test like "Food Allergy Panel," the Admin adds it to the Master List, and it is instantly available at all 10 outlets.
+Analytics: Every 3 months, the Admin can export a "Full Master Report" to see which clinic is doing the most assessments and which patients (by BMI category) are most frequent.
+Final Project Summary:
+PRD: Defined the business problem and the "Smart Clinic" solution.
+Architecture: Built a scalable Next.js + PostgreSQL foundation.
+UI/UX: Designed a 4-step stepper to end "Form Fatigue."
+Migration: Built a bridge to save your historical Google Sheets data.
+QA: Ensured clinical accuracy of BMI and test results.
+Launch: Professional deployment on Vercel with role-based access.
+NAMS is now ready for development.
