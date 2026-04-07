@@ -1,0 +1,56 @@
+To ensure a smooth build for NAMS, the development phase is broken into four logical "Sprints." This ensures that the most critical features (like the assessment form) are built on a solid foundation of data.
+Phase 1: Data Foundation (The "Skeleton")
+Goal: Set up the database and authentication so users can log in and the system can store data.
+Apply Prisma Schema:
+Finalize schema.prisma with the models provided in the Technical Architecture.
+Run npx prisma db push to sync your PostgreSQL database.
+Seed Data: Create a script to add the first 5 Sahakar Smart Clinic outlets and a basic list of tests (CBC, Lipid, etc.) so the form isn't empty.
+Authentication (NextAuth):
+Implement the login page.
+Set up middleware to protect routes (e.g., /dashboard is only for logged-in users).
+Phase 2: Admin Control Panel (The "Settings")
+Goal: Allow the Admin to manage the moving parts of NAMS (Tests and Outlets).
+Test Master List Manager:
+Build a UI where the Admin can add "Vitamin D" or "Iron Studies."
+Implement "Categories" (e.g., grouping tests under "Liver Profile").
+Outlet Manager:
+A simple table to add new Sahakar Clinic locations as the business expands.
+User Management:
+Invite or deactivate Nutritionist accounts.
+Phase 3: The Smart Assessment Engine (The "Heart")
+Goal: Replace the Google Form with the high-fidelity Stepper UI.
+Step 1: Identity & Lookup:
+Logic: When the user types a 10-digit phone number, use a useEffect or react-query to fetch existing patient data from the DB.
+Auto-fill: Use form.setValue() to populate Name, Age, and Place instantly.
+Step 2: Biometrics & BMI:
+Logic: Add a listener to the Height/Weight inputs.
+Formula: const bmi = weight / Math.pow(height/100, 2).
+Display the BMI dynamically with color coding (Green/Orange/Red).
+Step 3: Categorized Lab Tests:
+Fetch all MasterTests from the database.
+Map them into Shadcn Accordions based on their category.
+Selective Storage: Ensure only "checked" tests are saved to the selectedTests JSON array.
+Step 4: Clinical Submission:
+Use Next.js Server Actions to save the record. This ensures that even on slow clinic Wi-Fi, the data is handled securely.
+Phase 4: Dashboard & Reporting (The "Brain")
+Goal: Review entries and generate professional exports.
+The Master Review Table:
+Build a paginated table showing all assessments.
+Dynamic Filtering: Add dropdowns for Outlet, Date Range, and Status.
+Search: A "Search as you type" bar for Patient Name.
+Excel Export Engine (ExcelJS):
+Critical Logic: Write a function that takes the filtered table data and transforms the selectedTests JSON into a readable string (e.g., "CBC, Lipid Profile, HBA1C").
+Download the .xlsx file directly in the browser.
+Patient PDF Generator (jsPDF):
+Create a clean, branded PDF template for a single assessment that a Nutritionist can download and give to a patient.
+Phase 5: Data Migration (The "Legacy Import")
+Goal: Move your historical data from Google Sheets into NAMS.
+CSV Parser Script:
+Create a script that reads your Google Sheet CSV.
+Mapping: It should look at the "Contact Number" column. If it sees "9633435228" (Deepa), it creates the patient and then attaches her specific tests (lipid, lft, rft) as an assessment.
+Import Audit:
+Print a summary: "Imported 150 patients and 400 assessments successfully."
+Technical Pro-Tips for NAMS:
+Zod Validation: Use z.string().length(10) for phone numbers to prevent "junk" data.
+Loading States: Use Shadcn "Skeleton" components while the patient lookup is happening so the nutritionist doesn't think the app is frozen.
+Optimistic Updates: When an assessment is submitted, show a success message immediately while the database saves in the background.
