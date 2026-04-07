@@ -10,7 +10,7 @@ export async function createAssessment(data: {
   outletId: string;
   height: number;
   weight: number;
-  selectedTests: string[];
+  selectedTests: { name: string; value?: string }[];
   needsDietPlan: string;
   variationResults?: string;
   dietPlanNotes?: string;
@@ -29,7 +29,7 @@ export async function createAssessment(data: {
     data: {
       ...result.data,
       bmi,
-      selectedTests: data.selectedTests,
+      selectedTests: data.selectedTests as any, // Cast to any for Prisma JSON field
     },
   });
 

@@ -12,7 +12,7 @@ type AssessmentData = {
   height: number;
   weight: number;
   bmi: number;
-  selectedTests: string[];
+  selectedTests: { name: string; value?: string }[];
   variationResults?: string | null;
   dietPlanNotes?: string | null;
   remarks?: string | null;
@@ -99,7 +99,7 @@ export function generatePatientPDF(data: AssessmentData): jsPDF {
 
   // Lab Tests
   section("Tests Conducted", {
-    Tests: data.selectedTests.join(", ") || "None",
+    Tests: data.selectedTests.map(t => `${t.name}${t.value ? `: ${t.value}` : ""}`).join(", ") || "None",
   });
 
   // Clinical Notes

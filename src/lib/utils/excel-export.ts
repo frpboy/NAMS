@@ -55,7 +55,9 @@ export async function exportToExcel(
       weight: a.weight || "N/A",
       bmi: a.bmi || "N/A",
       testsConducted: Array.isArray(a.selectedTests)
-        ? (a.selectedTests as string[]).join(", ")
+        ? (a.selectedTests as { name: string; value?: string }[])
+            .map((t) => `${t.name}${t.value ? `: ${t.value}` : ""}`)
+            .join(", ")
         : "",
       variationResults: a.variationResults || "",
       dietPlanNotes: a.dietPlanNotes || "",

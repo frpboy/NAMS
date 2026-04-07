@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(npx skills:*)",
-      "Bash(npx prisma:*)"
+      "Bash(npx prisma:*)",
+      "Bash(del \"E:\\\\K4NN4N\\\\NAMS\\\\src\\\\app\\\\page.tsx\")"
     ]
   }
 }

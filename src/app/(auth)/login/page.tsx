@@ -24,75 +24,89 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError("Invalid email or password");
+        setError("Invalid email or password.");
       } else {
         router.push("/");
         router.refresh();
       }
     } catch {
-      setError("An error occurred. Please try again.");
+      setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted px-4">
-      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-lg">
-        <div className="text-center">
-          <img src="/logo.svg" alt="NAMS" className="mx-auto h-12 w-auto" />
-          <p className="mt-3 text-xs text-muted-foreground">
-            Sahakar Smart Clinic
-          </p>
-        </div>
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
+      <div className="w-full max-w-sm">
+        {/* Card */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+          {/* Logo */}
+          <div className="mb-7 text-center">
+            <img src="/logo.svg" alt="NAMS" className="mx-auto h-10 w-auto" />
+            <p className="mt-2.5 text-xs font-medium tracking-wide text-slate-400 uppercase">
+              Sahakar Smart Clinic
+            </p>
+          </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-              {error}
-            </div>
-          )}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="rounded-lg border border-red-100 bg-red-50 px-3 py-2.5 text-sm text-red-600">
+                {error}
+              </div>
+            )}
 
-          <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium">
+              <label
+                htmlFor="email"
+                className="block text-xs font-semibold uppercase tracking-wide text-slate-500"
+              >
                 Email
               </label>
               <input
                 id="email"
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="admin@sahakarclinic.com"
+                className="mt-1.5 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white"
+                placeholder="you@example.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium">
+              <label
+                htmlFor="password"
+                className="block text-xs font-semibold uppercase tracking-wide text-slate-500"
+              >
                 Password
               </label>
               <input
                 id="password"
                 type="password"
                 required
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 w-full rounded-md border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="mt-1.5 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white"
                 placeholder="••••••••"
               />
             </div>
-          </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:bg-primary/90 disabled:opacity-50"
-          >
-            {loading ? "Signing in..." : "Sign In"}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-2 w-full rounded-lg bg-teal-600 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? "Signing in…" : "Sign In"}
+            </button>
+          </form>
+        </div>
+
+        <p className="mt-5 text-center text-xs text-slate-400">
+          NAMS v1 · Nutrition Assessment Management System
+        </p>
       </div>
     </div>
   );

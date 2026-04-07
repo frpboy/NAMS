@@ -5,7 +5,7 @@ import { z } from "zod";
 export const patientSchema = z.object({
   contactNumber: z.string().length(10, "Contact number must be exactly 10 digits"),
   name: z.string().min(1, "Name is required").trim(),
-  age: z.coerce.number().int().min(1).max(150),
+  age: z.coerce.number().int().min(1, "Age must be at least 1").max(120, "Age must be 120 or less"),
   sex: z.enum(["MALE", "FEMALE", "OTHER"]),
   occupation: z.string().optional().nullable(),
   place: z.string().min(1, "Place is required").trim(),
@@ -13,12 +13,23 @@ export const patientSchema = z.object({
 
 // ─── Assessment Validation ───────────────────────────────────────
 
+const testResultSchema = z.union([
+  z.string(),
+  z.object({ name: z.string(), value: z.string().optional() }),
+]);
+
 export const assessmentSchema = z.object({
   patientId: z.string().cuid(),
-  outletId: z.string().cuid("Outlet is required"),
-  height: z.coerce.number().min(0).max(300),
-  weight: z.coerce.number().min(0).max(500),
-  selectedTests: z.array(z.string()).min(1, "At least one test must be selected"),
+  outletId: z.string().cuid("Please select an outlet"),
+  height: z.coerce
+    .number()
+    .min(1, "Height is required")
+    .max(300, "Height must be 300 cm or less"),
+  weight: z.coerce
+    .number()
+    .min(1, "Weight is required")
+    .max(500, "Weight must be 500 kg or less"),
+  selectedTests: z.array(testResultSchema).min(1, "Select at least one test"),
   needsDietPlan: z.enum(["Yes", "No", "Maybe"]),
   variationResults: z.string().optional().nullable(),
   dietPlanNotes: z.string().optional().nullable(),
@@ -27,7 +38,7 @@ export const assessmentSchema = z.object({
   interactionAt: z.coerce.date(),
 });
 
-// ─── Patient Lookup (Phone Search) ───────────────────────────────
+// ─── Patient Lookup ──────────────────────────────────────────────
 
 export const patientLookupSchema = z.object({
   contactNumber: z.string().length(10, "Enter a valid 10-digit phone number"),
