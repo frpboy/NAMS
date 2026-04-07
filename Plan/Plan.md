@@ -2,7 +2,7 @@
 Framework: Next.js (App Router)
 Language: TypeScript (for data integrity)
 Styling: Tailwind CSS + Shadcn UI (for a professional dashboard look)
-Database: PostgreSQL (with Prisma ORM) — Best for the relational nature of Outlets and Patient records.
+Database: **Supabase** PostgreSQL (with Prisma ORM) — Best for the relational nature of Outlets and Patient records.
 Authentication: NextAuth.js (Auth.js)
 Form Handling: React Hook Form + Zod (to handle the long list of medical tests)
 Exporting: ExcelJS (for Excel) and jspdf/html2canvas (for PDF reports)

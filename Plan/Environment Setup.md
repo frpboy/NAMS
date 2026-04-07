@@ -40,29 +40,38 @@ D. Export & Utility
 code
 Bash
 npm install exceljs jspdf html2canvas date-fns
-4. Database Provisioning (PostgreSQL)
-Since you are deploying to Vercel, you have two best options for your PostgreSQL database:
-Vercel Postgres: (Simplest - integrated directly into your Vercel dashboard).
-Supabase: (Excellent if you want a separate easy-to-manage UI for your database).
-Action: Create a database on Vercel/Supabase and grab your Connection String.
+4. Database Provisioning (Supabase PostgreSQL)
+The database for NAMS will be hosted on **Supabase**.
+Action: Create a Supabase project and grab your Connection Strings from Settings → Database.
+  - **Connection String (Transaction mode)**: Use for `DATABASE_URL` (uses Supavisor pooling)
+  - **Connection String (Session mode / Direct)**: Use for `DIRECT_URL` (needed for Prisma migrations)
 5. Environment Variables (.env)
 Create a .env file in your root folder. This file stores your "secrets" and prevents them from being leaked on GitHub.
 code
 Env
-# Database Connection (from Vercel/Supabase)
-DATABASE_URL="postgres://user:password@hostname:5432/nams"
+# Database Connection (from Supabase)
+# Transaction mode (Supavisor pooler) - for runtime
+DATABASE_URL="postgres://user:password@aws-0-region.pooler.supabase.com:6543/postgres?pgbouncer=true"
+# Direct connection (session mode) - for Prisma migrations
+DIRECT_URL="postgres://user:password@aws-0-region.supabase.co:5432/postgres"
 
 # Authentication (Generate a secret with: openssl rand -base64 32)
 NEXTAUTH_SECRET="your-secret-key-here"
 NEXTAUTH_URL="http://localhost:3000"
 
+# Supabase (Optional - for future Supabase client features)
+SUPABASE_URL="https://your-project.supabase.co"
+SUPABASE_ANON_KEY="your-anon-key"
+
 # Sahakar Smart Clinic Integration (Optional Future Proofing)
 SAHAKAR_API_KEY="your-api-key"
 6. Prisma Initialization (The Schema)
-Initialize Prisma to connect your code to your PostgreSQL database:
+Initialize Prisma to connect your code to your Supabase PostgreSQL database:
 code
 Bash
 npx prisma init
+Important: When running migrations (`npx prisma migrate dev`), use the `DIRECT_URL` environment variable.
+The `DATABASE_URL` (transaction mode with Supavisor pooling) is used at runtime.
 Next step: Copy the Prisma Schema code I provided in the Technical Architecture section into your prisma/schema.prisma file.
 7. Version Control & Deployment Setup
 GitHub: Create a private repository named nams-web.

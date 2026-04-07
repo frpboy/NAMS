@@ -3,8 +3,10 @@ This is the final stage where NAMS (Nutrition Assessment Management System) goes
 1. Production Deployment (The "Launch")
 We will use Vercel for hosting because it is optimized for Next.js and offers high performance in India.
 Step 1: Database Provisioning:
-Initialize the production PostgreSQL database (Vercel Postgres or Supabase).
-Run npx prisma db push to create the tables in the live environment.
+Initialize the production **Supabase** PostgreSQL database.
+Run `npx prisma db push` to create the tables in the live environment.
+  - Use the `DIRECT_URL` (session mode connection) for migrations.
+  - The runtime `DATABASE_URL` should use Supavisor transaction mode pooling.
 Step 2: Environment Variables:
 Configure the production .env in the Vercel Dashboard (DATABASE_URL, NEXTAUTH_SECRET, APP_URL).
 Step 3: Custom Domain:
@@ -38,7 +40,7 @@ New Services: If you add a new test like "Food Allergy Panel," the Admin adds it
 Analytics: Every 3 months, the Admin can export a "Full Master Report" to see which clinic is doing the most assessments and which patients (by BMI category) are most frequent.
 Final Project Summary:
 PRD: Defined the business problem and the "Smart Clinic" solution.
-Architecture: Built a scalable Next.js + PostgreSQL foundation.
+Architecture: Built a scalable Next.js + **Supabase** PostgreSQL foundation.
 UI/UX: Designed a 4-step stepper to end "Form Fatigue."
 Migration: Built a bridge to save your historical Google Sheets data.
 QA: Ensured clinical accuracy of BMI and test results.

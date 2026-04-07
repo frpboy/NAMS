@@ -3,7 +3,7 @@ Phase 1: Data Foundation (The "Skeleton")
 Goal: Set up the database and authentication so users can log in and the system can store data.
 Apply Prisma Schema:
 Finalize schema.prisma with the models provided in the Technical Architecture.
-Run npx prisma db push to sync your PostgreSQL database.
+Run `npx prisma db push` to sync your **Supabase** PostgreSQL database.
 Seed Data: Create a script to add the first 5 Sahakar Smart Clinic outlets and a basic list of tests (CBC, Lipid, etc.) so the form isn't empty.
 Authentication (NextAuth):
 Implement the login page.
