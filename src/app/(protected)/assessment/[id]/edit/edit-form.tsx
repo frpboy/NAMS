@@ -319,6 +319,15 @@ function Step1Patient({
 }
 
 function Step2Vitals({ height, setHeight, weight, setWeight, bmi }: any) {
+  const category = bmi ? getBMICategory(bmi) : "";
+  const colorClass = bmi ? getBMIColor(bmi) : "";
+  const bgClass =
+    !bmi ? "bg-slate-50 border-slate-100"
+    : bmi < 18.5 ? "bg-blue-50 border-blue-100"
+    : bmi < 25 ? "bg-green-50 border-green-100"
+    : bmi < 30 ? "bg-amber-50 border-amber-100"
+    : "bg-red-50 border-red-100 shadow-lg shadow-red-100";
+
   return (
     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <h2 className="text-base font-semibold text-slate-800">Vitals & Measurements</h2>
@@ -334,13 +343,30 @@ function Step2Vitals({ height, setHeight, weight, setWeight, bmi }: any) {
           </div>
         </div>
         <div className={cn(
-          "rounded-2xl border-2 p-6 flex flex-col items-center justify-center transition-all",
-          !bmi ? "bg-slate-50 border-slate-100" : "bg-teal-50 border-teal-100"
+          "rounded-3xl border-2 p-6 flex flex-col items-center justify-center transition-all duration-500",
+          bgClass
         )}>
-          <span className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">BMI</span>
-          <span className={cn("text-4xl font-black my-1", !bmi ? "text-slate-300" : "text-slate-900")}>
-            {bmi ? bmi.toFixed(1) : "—"}
-          </span>
+          <span className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">BMI SCORE</span>
+          <div className="my-2 relative">
+            <span className={cn(
+              "text-5xl font-black tabular-nums",
+              !bmi ? "text-slate-200" : "text-slate-900",
+              colorClass
+            )}>
+              {bmi ? bmi.toFixed(1) : "—"}
+            </span>
+          </div>
+          {bmi && (
+            <span className={cn(
+              "text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider",
+              bmi < 18.5 ? "bg-blue-100 text-blue-700" :
+              bmi < 25 ? "bg-green-100 text-green-700" :
+              bmi < 30 ? "bg-amber-100 text-amber-700" :
+              "bg-red-100 text-red-700"
+            )}>
+              {category}
+            </span>
+          )}
         </div>
       </div>
     </div>

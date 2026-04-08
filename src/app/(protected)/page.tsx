@@ -6,8 +6,8 @@ import DashboardWithFilters from "./dashboard-content";
 import { Activity, CalendarDays, Calendar, Salad, Building2 } from "lucide-react";
 
 export default async function DashboardPage() {
-  const stats = await getDashboardStats();
-  const [assessments, outlets] = await Promise.all([
+  const [stats, assessments, outlets] = await Promise.all([
+    getDashboardStats(),
     getAssessments(),
     getOutlets(),
   ]);

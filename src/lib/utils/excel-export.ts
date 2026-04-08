@@ -46,17 +46,21 @@ export async function exportToExcel(
   for (const a of assessments) {
     worksheet.addRow({
       date: formatDate(a.date),
-      patientName: a.patient.name,
+      patientName: a.patient.name.toUpperCase(),
       contactNumber: a.patient.contactNumber,
       age: a.patient.age,
       sex: a.patient.sex,
-      outlet: a.outlet.name,
+      outlet: a.outlet.name.toUpperCase(),
       height: a.height || "N/A",
       weight: a.weight || "N/A",
       bmi: a.bmi || "N/A",
       testsConducted: Array.isArray(a.selectedTests)
-        ? (a.selectedTests as { name: string; value?: string }[])
-            .map((t) => `${t.name}${t.value ? `: ${t.value}` : ""}`)
+        ? a.selectedTests
+            .map((t: any) => {
+              const name = typeof t === "string" ? t : t.name;
+              const value = typeof t === "string" ? undefined : t.value;
+              return `${name}${value ? `: ${value}` : ""}`;
+            })
             .join(", ")
         : "",
       variationResults: a.variationResults || "",

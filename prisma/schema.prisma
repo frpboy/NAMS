@@ -18,13 +18,31 @@ enum Role {
 // ─── Authenticated Users ─────────────────────────────────────────
 
 model User {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   name      String
-  email     String   @unique
-  password  String   // Hashed with bcrypt
-  role      Role     @default(NUTRITIONIST)
+  email     String     @unique
+  password  String     // Hashed with bcrypt
+  role      Role       @default(NUTRITIONIST)
+  auditLogs AuditLog[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+// ─── Audit Logs ──────────────────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String   // e.g., "CREATE_ASSESSMENT", "DELETE_OUTLET"
+  entity    String   // e.g., "Assessment", "User"
+  entityId  String?
+  details   String?  @db.Text
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
 }
 
 // ─── Clinic Outlets ──────────────────────────────────────────────
@@ -71,7 +89,20 @@ model Patient {
   age           Int
   sex           String
   occupation    String?
-  place         String?
+  place         String
+  assessments   Assessment[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+// ─── Diet Plans ──────────────────────────────────────────────────
+model DietPlan {
+  id            String       @id @default(cuid())
+  name          String       @unique
+  price         Float
+  description   String?      @db.Text
+  whatsIncluded String?      @db.Text
+  isActive      Boolean      @default(true)
   assessments   Assessment[]
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
@@ -86,6 +117,8 @@ model Assessment {
   patient           Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
   outletId          String
   outlet            Outlet   @relation(fields: [outletId], references: [id])
+  dietPlanId        String?
+  dietPlan          DietPlan? @relation(fields: [dietPlanId], references: [id])
 
   // Biometrics
   height            Float?   // cm
@@ -110,4 +143,6 @@ model Assessment {
   @@index([patientId])
   @@index([outletId])
   @@index([date])
+  @@index([needsDietPlan])
+  @@index([dietPlanId])
 }

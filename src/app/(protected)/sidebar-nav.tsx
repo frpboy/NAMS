@@ -9,17 +9,25 @@ import {
   Building2,
   FlaskConical,
   Users,
+  BarChart3,
+  History,
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/assessment/new", label: "New Assessment", icon: ClipboardPlus },
 ];
 
 const ADMIN_ITEMS = [
   { href: "/admin/outlets", label: "Outlets", icon: Building2 },
   { href: "/admin/tests", label: "Test Master List", icon: FlaskConical },
+  { href: "/admin/diet-plans", label: "Diet Plans", icon: ClipboardPlus }, // Reuse icon or similar
+];
+
+const USER_MGMT_ITEMS = [
   { href: "/admin/users", label: "Users", icon: Users },
+  { href: "/admin/audit", label: "Audit Logs", icon: History },
 ];
 
 export function SidebarNav({ role, isCollapsed }: { role: string, isCollapsed: boolean }) {
@@ -31,17 +39,37 @@ export function SidebarNav({ role, isCollapsed }: { role: string, isCollapsed: b
         <NavLink key={item.href} {...item} active={pathname === item.href} isCollapsed={isCollapsed} />
       ))}
 
+      <div className="pt-4">
+        {!isCollapsed && (
+          <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">
+            System Modules
+          </p>
+        )}
+        {isCollapsed && <div className="mx-3 border-t border-slate-100 my-4" />}
+        
+        <div className="space-y-1">
+          {ADMIN_ITEMS.map((item) => (
+            <NavLink
+              key={item.href}
+              {...item}
+              active={pathname.startsWith(item.href)}
+              isCollapsed={isCollapsed}
+            />
+          ))}
+        </div>
+      </div>
+
       {role === "ADMIN" && (
         <div className="pt-4">
           {!isCollapsed && (
             <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">
-              Admin Panel
+              Admin Only
             </p>
           )}
           {isCollapsed && <div className="mx-3 border-t border-slate-100 my-4" />}
           
           <div className="space-y-1">
-            {ADMIN_ITEMS.map((item) => (
+            {USER_MGMT_ITEMS.map((item) => (
               <NavLink
                 key={item.href}
                 {...item}

@@ -8,7 +8,7 @@ export const patientSchema = z.object({
   age: z.coerce.number().int().min(1, "Age must be at least 1").max(120, "Age must be 120 or less"),
   sex: z.enum(["MALE", "FEMALE", "OTHER"]),
   occupation: z.string().optional().nullable(),
-  place: z.string().optional().nullable(),
+  place: z.string().min(1, "Place is required").trim(),
 });
 
 // ─── Assessment Validation ───────────────────────────────────────
@@ -21,6 +21,7 @@ const testResultSchema = z.union([
 export const assessmentSchema = z.object({
   patientId: z.string().cuid(),
   outletId: z.string().cuid("Please select an outlet"),
+  dietPlanId: z.string().optional().nullable(),
   height: z.coerce
     .number()
     .max(300, "Height must be 300 cm or less")

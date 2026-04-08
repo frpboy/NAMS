@@ -204,23 +204,27 @@ export default function DashboardWithFilters({
                   <td className="px-4 py-3 text-slate-500 tabular-nums">
                     {new Date(a.date).toLocaleDateString("en-GB")}
                   </td>
-                  <td className="px-4 py-3 font-medium text-slate-900">
+                  <td className="px-4 py-3 font-medium text-slate-900 uppercase">
                     {a.patient.name}
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-slate-500">
                     {a.patient.contactNumber}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{a.outlet.name}</td>
+                  <td className="px-4 py-3 text-slate-600 uppercase">{a.outlet.name}</td>
                   <td className="px-4 py-3">
                     <BMIBadge bmi={a.bmi} />
                   </td>
                   <td className="px-4 py-3 text-xs text-slate-500">
                     {Array.isArray(a.selectedTests)
-                      ? (a.selectedTests as { name: string; value?: string }[])
+                      ? a.selectedTests
                           .slice(0, 3)
-                          .map((t) => `${t.name}${t.value ? `: ${t.value}` : ""}`)
+                          .map((t: any) => {
+                            const name = typeof t === "string" ? t : t.name;
+                            const value = typeof t === "string" ? undefined : t.value;
+                            return `${name}${value ? `: ${value}` : ""}`;
+                          })
                           .join(", ") +
-                        ((a.selectedTests as any[]).length > 3 ? " …" : "")
+                        (a.selectedTests.length > 3 ? " …" : "")
                       : ""}
                   </td>
                   <td className="px-4 py-3">

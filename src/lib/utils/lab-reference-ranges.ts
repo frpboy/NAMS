@@ -227,6 +227,7 @@ export const LAB_TESTS: LabReferenceRange[] = [
 ];
 
 export function getReferenceRange(testName: string, gender: Gender = "OTHER") {
+  if (!testName) return null;
   const test = LAB_TESTS.find((t) => t.name.toLowerCase() === testName.toLowerCase());
   if (!test) return null;
 
@@ -244,6 +245,7 @@ export function getLabStatus(value: number | string, testName: string, gender: G
   const numValue = typeof value === "string" ? parseFloat(value) : value;
   if (isNaN(numValue)) return { status: "NONE", color: "text-slate-400", label: "No Value" };
 
+  if (!testName) return { status: "NONE", color: "text-slate-400", label: "No Name" };
   const ref = getReferenceRange(testName, gender);
   if (!ref) return { status: "NONE", color: "text-slate-400", label: "No Ref" };
 

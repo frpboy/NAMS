@@ -68,3 +68,23 @@ export async function getPatients(search?: string) {
     take: 100,
   });
 }
+
+export async function getUniquePlaces(search: string) {
+  if (search.length < 2) return [];
+  
+  const places = await db.patient.findMany({
+    where: {
+      place: {
+        contains: search,
+        mode: "insensitive",
+      },
+    },
+    select: {
+      place: true,
+    },
+    distinct: ["place"],
+    take: 5,
+  });
+
+  return places.map((p) => p.place).filter(Boolean);
+}
