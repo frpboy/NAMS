@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth/auth.config";
+import { auth } from "@/lib/auth/auth";
 import { getUsers } from "@/lib/actions/users";
 import UsersClient from "./users-client";
 

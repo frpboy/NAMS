@@ -1,44 +1,40 @@
 ... (previous content) ...
 
-## 2026-04-08 ~23:45 — Data Integrity, Layout Fixes & Admin Access
+## 2026-04-09 03:15 — Performance Optimization & Intelligent Search
 
 ### Problem
-1. **Data Redundancy:** Multiple duplicate and overlapping lab tests (e.g., "HB" vs "Hemoglobin") were causing confusion in the assessment flow.
-2. **Sync Issues:** Updated clinical descriptions were intermittently failing to appear in the app due to server-side caching and outdated Prisma Client generation.
-3. **Layout Regression:** A flexbox conflict in `SidebarContainer` created a large unused white gap on the dashboard and other pages.
-4. **Access Request:** Need for a dedicated main administrative account for Sahakar Clinic.
+1. **User Experience:** Selecting from 40+ tests via checkboxes was tedious on mobile and lacked the ability to record custom parameters not in the master list.
+2. **System Latency:** Intermittent lagging during login and navigation due to sub-optimal Prisma Client pooling and manual auth lookups.
 
 ### Changes Made
 
-**Database Cleanup & Data Quality**
-- Executed `TRUNCATE TABLE "MasterTest" RESTART IDENTITY` to perform a clean sweep of redundant parameters.
-- Refined `seed.ts` to strictly exclude abbreviations (HB, FBS, PPBS, LFT, etc.) in favor of full clinical names with rich data.
-- Successfully re-seeded **38 unique, rich lab parameters**.
-- Updated `seed.ts` to remove automatic outlet creation, as real outlets are now managed via the production UI.
+**Intelligent Test Selector**
+- Replaced the category-based checkbox list with a **Searchable Multi-Select Dropdown** in Step 3.
+- Features:
+  - Instant filtering across all 38+ master parameters.
+  - **Custom Test Entry:** If a parameter is not found, nutritionists can add it as a "Custom Parameter" on-the-fly.
+  - Value input remains inline with real-time status flagging (LOW/HIGH).
+  - Streamlined "Trash" icon for removing tests from the profile.
+- Applied this new selector to both `AssessmentForm` (Create) and `AssessmentEditForm` (Edit).
 
-**Layout & UI Optimization**
-- Resolved the "Half-page Blank" issue: Refactored `SidebarContainer` to wrap `children` directly and consolidated it into `ProtectedLayout`.
-- Standardized `main` content padding to react dynamically to the sidebar's collapse state, ensuring full-width utilization of the screen.
-- Fixed placeholder helptext in the Tests Edit page to ensure actual data values are displayed in the form fields.
+**Performance Infrastructure**
+- **Prisma Singleton Pattern:** Refactored `src/lib/db.ts` to implement a global Prisma instance, preventing "Too many connections" errors and reducing cold-start latency.
+- **Auth Flow Optimization:** Cleaned up `auth.ts` and `auth.config.ts` to utilize the optimized DB instance, resulting in significantly faster login response times.
+- **Transition Smoothness:** Added `animate-in` transitions to all form steps to mask server-side processing and provide a "snappier" feel.
 
-**Caching & Performance**
-- Forced dynamic rendering (`export const dynamic = "force-dynamic"`) on `TestsPage` and `NewAssessmentPage` to guarantee that clinical data updates are reflected immediately without browser/server caching delays.
-
-**Account Management**
-- Provisioned a new master admin account: `sahakarsmartclinic@gmail.com`.
-- Updated seed script to ensure this user persists across environment resets.
+**Data Flexibility**
+- Standardized `selectedTests` handling to ensure custom parameters (without master metadata) are still safely rendered in reports and PDF exports.
 
 ## Build Verification
 
 | Check | Result |
 |---|---|
-| MasterTest Count | ✅ 38 Unique Parameters (No duplicates) |
-| Layout Alignment | ✅ Full width content (No empty gaps) |
-| Data Freshness | ✅ Verified (Force-dynamic enabled) |
-| Admin Access | ✅ Sahakar Admin account active |
+| Search Logic | ✅ Verified (Case-insensitive) |
+| Custom Parameters | ✅ Verified (Saved to JSON correctly) |
+| Auth Speed | ✅ Verified (Instant dashboard redirect) |
+| Layout Stability | ✅ Verified (Fixed Z-index dropdown issues) |
 
 ## Next Steps
-- [ ] Add assessment detail/edit view (`/assessment/[id]`)
-- [ ] Add loading skeletons for patient lookup
-- [ ] Add toast notifications for success/error feedback
+- [ ] Implement loading skeletons for patient lookup debouncing
 - [ ] Add optimistic UI updates on form submission
+- [ ] Final production deployment verification for search features

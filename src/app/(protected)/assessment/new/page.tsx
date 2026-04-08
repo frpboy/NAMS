@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth/auth.config";
+import { auth } from "@/lib/auth/auth";
 import { getOutlets } from "@/lib/actions/outlets";
 import { getMasterTestsByCategory } from "@/lib/actions/master-tests";
 import AssessmentForm from "./assessment-form";

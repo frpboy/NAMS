@@ -1,34 +1,41 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { startOfMonth, startOfDay } from "date-fns";
 
 export async function getDashboardStats() {
   const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const monthStart = startOfMonth(now);
+  const dayStart = startOfDay(now);
 
   const [
     totalAssessments,
     thisMonthAssessments,
     todayAssessments,
-    outlets,
     needsDietPlan,
+    outlets,
   ] = await Promise.all([
     db.assessment.count(),
-    db.assessment.count({ where: { date: { gte: startOfMonth } } }),
-    db.assessment.count({ where: { date: { gte: startOfDay } } }),
+    db.assessment.count({ where: { date: { gte: monthStart } } }),
+    db.assessment.count({ where: { date: { gte: dayStart } } }),
+    db.assessment.count({ where: { needsDietPlan: "Yes" } }),
     db.outlet.findMany({
-      include: { _count: { select: { assessments: true } } },
+      select: {
+        id: true,
+        name: true,
+        _count: {
+          select: { assessments: true },
+        },
+      },
       orderBy: { name: "asc" },
     }),
-    db.assessment.count({ where: { needsDietPlan: "Yes" } }),
   ]);
 
   return {
     totalAssessments,
     thisMonthAssessments,
     todayAssessments,
-    outlets,
     needsDietPlan,
+    outlets,
   };
 }

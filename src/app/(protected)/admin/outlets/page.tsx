@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth/auth.config";
+import { auth } from "@/lib/auth/auth";
 import { getOutlets } from "@/lib/actions/outlets";
 import OutletsClient from "./outlets-client";
 

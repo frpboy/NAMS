@@ -1,66 +1,42 @@
 import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
-import { db } from "@/lib/db";
+import type { NextAuthConfig } from "next-auth";
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
-  providers: [
-    Credentials({
-      name: "credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      authorize: async (credentials) => {
-        if (!credentials?.email || !credentials?.password) {
-          return null;
-        }
-
-        const email = credentials.email as string;
-        const password = credentials.password as string;
-
-        const user = await db.user.findUnique({
-          where: { email },
-        });
-
-        if (!user) {
-          return null;
-        }
-
-        const isValid = await bcrypt.compare(password, user.password);
-        if (!isValid) {
-          return null;
-        }
-
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        };
-      },
-    }),
-  ],
+export const authConfig = {
   pages: {
     signIn: "/login",
   },
-  session: {
-    strategy: "jwt",
-  },
   callbacks: {
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const isPublicPage = nextUrl.pathname === "/login" || nextUrl.pathname.startsWith("/api/auth");
+      
+      if (!isLoggedIn && !isPublicPage) {
+        return false; // Redirect to login
+      }
+      if (isLoggedIn && nextUrl.pathname === "/login") {
+        return Response.redirect(new URL("/", nextUrl));
+      }
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role;
-        token.id = user.id ?? "";
+        token.id = user.id;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as { role: string; id: string }).role = token.role as string;
-        (session.user as { role: string; id: string }).id = token.id as string;
+        session.user.role = token.role as any;
+        session.user.id = token.id as string;
       }
       return session;
     },
   },
-});
+  providers: [],
+  session: {
+    strategy: "jwt",
+  },
+} satisfies NextAuthConfig;
+
+export const { auth } = NextAuth(authConfig);

@@ -8,8 +8,8 @@ import { calculateBMI } from "@/lib/utils/bmi-calculator";
 export async function createAssessment(data: {
   patientId: string;
   outletId: string;
-  height: number;
-  weight: number;
+  height?: number | null;
+  weight?: number | null;
   selectedTests: { name: string; value?: string }[];
   needsDietPlan: string;
   variationResults?: string;
@@ -23,7 +23,7 @@ export async function createAssessment(data: {
     return { error: result.error.errors[0].message };
   }
 
-  const bmi = calculateBMI(data.height, data.weight);
+  const bmi = (data.height && data.weight) ? calculateBMI(data.height, data.weight) : null;
 
   const assessment = await db.assessment.create({
     data: {
@@ -42,9 +42,9 @@ export async function updateAssessment(
   id: string,
   data: Partial<{
     outletId: string;
-    height: number;
-    weight: number;
-    selectedTests: string[];
+    height?: number | null;
+    weight?: number | null;
+    selectedTests: { name: string; value?: string }[];
     needsDietPlan: string;
     variationResults?: string;
     dietPlanNotes?: string;
@@ -54,15 +54,16 @@ export async function updateAssessment(
   }>
 ) {
   const bmi =
-    data.height && data.weight
+    (data.height && data.weight)
       ? calculateBMI(data.height, data.weight)
-      : undefined;
+      : (data.height === null || data.weight === null) ? null : undefined;
 
   await db.assessment.update({
     where: { id },
     data: {
       ...data,
       ...(bmi !== undefined && { bmi }),
+      selectedTests: data.selectedTests as any,
     },
   });
 

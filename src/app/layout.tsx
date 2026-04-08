@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import Script from "next/script";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -35,6 +36,7 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body className="antialiased font-[var(--font-inter)]">
         {children}
+        <Toaster position="top-center" richColors closeButton />
         <Script id="clarity-analytics" strategy="afterInteractive">
           {`(function(c,l,a,r,i,t,y){
             c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};

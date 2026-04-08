@@ -8,7 +8,7 @@ export const patientSchema = z.object({
   age: z.coerce.number().int().min(1, "Age must be at least 1").max(120, "Age must be 120 or less"),
   sex: z.enum(["MALE", "FEMALE", "OTHER"]),
   occupation: z.string().optional().nullable(),
-  place: z.string().min(1, "Place is required").trim(),
+  place: z.string().optional().nullable(),
 });
 
 // ─── Assessment Validation ───────────────────────────────────────
@@ -23,12 +23,14 @@ export const assessmentSchema = z.object({
   outletId: z.string().cuid("Please select an outlet"),
   height: z.coerce
     .number()
-    .min(1, "Height is required")
-    .max(300, "Height must be 300 cm or less"),
+    .max(300, "Height must be 300 cm or less")
+    .optional()
+    .nullable(),
   weight: z.coerce
     .number()
-    .min(1, "Weight is required")
-    .max(500, "Weight must be 500 kg or less"),
+    .max(500, "Weight must be 500 kg or less")
+    .optional()
+    .nullable(),
   selectedTests: z.array(testResultSchema).min(1, "Select at least one test"),
   needsDietPlan: z.enum(["Yes", "No", "Maybe"]),
   variationResults: z.string().optional().nullable(),

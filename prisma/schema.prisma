@@ -71,7 +71,7 @@ model Patient {
   age           Int
   sex           String
   occupation    String?
-  place         String
+  place         String?
   assessments   Assessment[]
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
@@ -88,9 +88,9 @@ model Assessment {
   outlet            Outlet   @relation(fields: [outletId], references: [id])
 
   // Biometrics
-  height            Float    // cm
-  weight            Float    // kg
-  bmi               Float    // Auto-calculated
+  height            Float?   // cm
+  weight            Float?   // kg
+  bmi               Float?   // Auto-calculated
 
   // Dynamic Selected Tests (JSON array)
   selectedTests     Json     // e.g., ["CBC", "LFT", "LIPID"]

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { exportToExcel } from "@/lib/utils/excel-export";
 import { generatePatientPDF } from "@/lib/utils/pdf-export";
-import { Download, FileText, Search, SlidersHorizontal } from "lucide-react";
+import { Download, FileText, Search, SlidersHorizontal, Eye, Pencil } from "lucide-react";
+import Link from "next/link";
+import { toast } from "sonner";
 import type { Assessment, Patient, Outlet } from "@prisma/client";
 
 type AssessmentWithRelations = Assessment & {
@@ -24,61 +26,77 @@ export default function DashboardWithFilters({
   const [patientSearch, setPatientSearch] = useState("");
   const [exporting, setExporting] = useState(false);
 
-  const filtered = initialAssessments.filter((a) => {
-    if (outletFilter && a.outletId !== outletFilter) return false;
-    if (
-      patientSearch &&
-      !a.patient.name.toLowerCase().includes(patientSearch.toLowerCase()) &&
-      !a.patient.contactNumber.includes(patientSearch)
-    )
-      return false;
-    if (dateFrom && new Date(a.date) < new Date(dateFrom)) return false;
-    if (dateTo && new Date(a.date) > new Date(dateTo + "T23:59:59"))
-      return false;
-    return true;
-  });
+  const filtered = useMemo(() => {
+    return initialAssessments.filter((a) => {
+      if (outletFilter && a.outletId !== outletFilter) return false;
+      if (
+        patientSearch &&
+        !a.patient.name.toLowerCase().includes(patientSearch.toLowerCase()) &&
+        !a.patient.contactNumber.includes(patientSearch)
+      )
+        return false;
+      
+      const aDate = new Date(a.date);
+      if (dateFrom && aDate < new Date(dateFrom)) return false;
+      if (dateTo) {
+        const end = new Date(dateTo);
+        end.setHours(23, 59, 59, 999);
+        if (aDate > end) return false;
+      }
+      return true;
+    });
+  }, [initialAssessments, outletFilter, patientSearch, dateFrom, dateTo]);
 
   const handleExport = async () => {
-    setExporting(true);
-    const { buffer, filename } = await exportToExcel(filtered);
-    const blob = new Blob([buffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-    setExporting(false);
+    try {
+      setExporting(true);
+      const { buffer, filename } = await exportToExcel(filtered);
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Excel export successful");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to export Excel");
+    } finally {
+      setExporting(false);
+    }
   };
 
   const handleViewPDF = (a: AssessmentWithRelations) => {
-    const pdf = generatePatientPDF({
-      date: new Date(a.date).toLocaleDateString("en-GB"),
-      patientName: a.patient.name,
-      age: a.patient.age,
-      sex: a.patient.sex,
-      contactNumber: a.patient.contactNumber,
-      outletName: a.outlet.name,
-      height: a.height,
-      weight: a.weight,
-      bmi: a.bmi,
-      selectedTests: Array.isArray(a.selectedTests)
-        ? (a.selectedTests as { name: string; value?: string }[])
-        : [],
-      variationResults: a.variationResults,
-      dietPlanNotes: a.dietPlanNotes,
-      remarks: a.remarks,
-      needsDietPlan: a.needsDietPlan,
-      resultReceivedAt: new Date(a.resultReceivedAt).toLocaleDateString(
-        "en-GB"
-      ),
-      interactionAt: new Date(a.interactionAt).toLocaleDateString("en-GB"),
-    });
-    pdf.save(
-      `assessment-${a.patient.name}-${new Date(a.date).toISOString().slice(0, 10)}.pdf`
-    );
+    try {
+      const pdf = generatePatientPDF({
+        date: new Date(a.date).toLocaleDateString("en-GB"),
+        patientName: a.patient.name,
+        age: a.patient.age,
+        sex: a.patient.sex,
+        contactNumber: a.patient.contactNumber,
+        outletName: a.outlet.name,
+        height: a.height,
+        weight: a.weight,
+        bmi: a.bmi,
+        selectedTests: Array.isArray(a.selectedTests)
+          ? (a.selectedTests as { name: string; value?: string }[])
+          : [],
+        variationResults: a.variationResults,
+        dietPlanNotes: a.dietPlanNotes,
+        remarks: a.remarks,
+        needsDietPlan: a.needsDietPlan,
+        resultReceivedAt: new Date(a.resultReceivedAt).toLocaleDateString("en-GB"),
+        interactionAt: new Date(a.interactionAt).toLocaleDateString("en-GB"),
+      });
+      pdf.save(`assessment-${a.patient.name}-${new Date(a.date).toISOString().slice(0, 10)}.pdf`);
+      toast.success(`PDF for ${a.patient.name} generated`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to generate PDF");
+    }
   };
 
   return (
@@ -173,7 +191,7 @@ export default function DashboardWithFilters({
                   Diet Plan
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  PDF
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -209,13 +227,29 @@ export default function DashboardWithFilters({
                     <DietBadge value={a.needsDietPlan} />
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => handleViewPDF(a)}
-                      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-                    >
-                      <FileText className="h-3.5 w-3.5" />
-                      PDF
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      <Link
+                        href={`/assessment/${a.id}`}
+                        className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-teal-600 transition hover:bg-teal-50"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                        View
+                      </Link>
+                      <Link
+                        href={`/assessment/${a.id}/edit`}
+                        className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                        Edit
+                      </Link>
+                      <button
+                        onClick={() => handleViewPDF(a)}
+                        className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+                      >
+                        <FileText className="h-3.5 w-3.5" />
+                        PDF
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

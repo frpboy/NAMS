@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth/auth.config";
+import { auth } from "@/lib/auth/auth";
 import { getMasterTests } from "@/lib/actions/master-tests";
 import TestsClient from "./tests-client";
 

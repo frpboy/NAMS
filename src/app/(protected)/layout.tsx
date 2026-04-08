@@ -1,6 +1,5 @@
-import { auth } from "@/lib/auth/auth.config";
+import { auth, signOut } from "@/lib/auth/auth";
 import { redirect } from "next/navigation";
-import { signOut } from "@/lib/auth/auth.config";
 import { SidebarContainer } from "./sidebar-container";
 
 export default async function ProtectedLayout({

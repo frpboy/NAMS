@@ -39,7 +39,7 @@ export async function createOrUpdatePatient(data: {
   age: number;
   sex: string;
   occupation?: string;
-  place: string;
+  place?: string | null;
 }) {
   return db.patient.upsert({
     where: { contactNumber: data.contactNumber },
