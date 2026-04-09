@@ -5,8 +5,6 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth/auth";
 import AssessmentEditForm from "./edit-form";
 
-export const dynamic = "force-dynamic";
-
 export default async function AssessmentEditPage({
   params,
 }: {

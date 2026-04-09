@@ -24,6 +24,7 @@ import {
 import { cn } from "@/lib/cn";
 import { toast } from "sonner";
 import Link from "next/link";
+import { formatDateGB, formatLongDateGB } from "@/lib/utils/date-format";
 
 type AssessmentDetailProps = {
   assessment: any;
@@ -37,7 +38,7 @@ export default function AssessmentDetailClient({ assessment }: AssessmentDetailP
     try {
       setExporting(true);
       const pdf = generatePatientPDF({
-        date: new Date(assessment.date).toLocaleDateString("en-GB"),
+        date: formatDateGB(assessment.date),
         patientName: assessment.patient.name,
         age: assessment.patient.age,
         sex: assessment.patient.sex,
@@ -53,8 +54,8 @@ export default function AssessmentDetailClient({ assessment }: AssessmentDetailP
         dietPlanNotes: assessment.dietPlanNotes,
         remarks: assessment.remarks,
         needsDietPlan: assessment.needsDietPlan,
-        resultReceivedAt: new Date(assessment.resultReceivedAt).toLocaleDateString("en-GB"),
-        interactionAt: new Date(assessment.interactionAt).toLocaleDateString("en-GB"),
+        resultReceivedAt: formatDateGB(assessment.resultReceivedAt),
+        interactionAt: formatDateGB(assessment.interactionAt),
         history: assessment.patient.assessments,
       });
       pdf.save(`assessment-${assessment.patient.name}-${new Date(assessment.date).toISOString().slice(0, 10)}.pdf`);
@@ -109,7 +110,7 @@ export default function AssessmentDetailClient({ assessment }: AssessmentDetailP
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 bg-teal-500/20 text-teal-300 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-teal-500/30">
                   <Calendar className="h-3 w-3" />
-                  Assessment Date: {new Date(assessment.date).toLocaleDateString("en-GB", { day: 'numeric', month: 'long', year: 'numeric' })}
+                  Assessment Date: {formatLongDateGB(assessment.date)}
                 </div>
                 <h1 className="text-4xl font-extrabold tracking-tight uppercase">{assessment.patient.name}</h1>
                 <div className="flex flex-wrap items-center gap-4 text-slate-400 text-sm font-medium">

@@ -1,14 +1,41 @@
 "use server";
 
+import type { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { outletSchema } from "@/lib/validations";
 
-export async function getOutlets() {
-  return db.outlet.findMany({
+type OutletWithAssessmentCount = Prisma.OutletGetPayload<{
+  include: {
+    _count: {
+      select: {
+        assessments: true;
+      };
+    };
+  };
+}>;
+
+export async function getOutlets(): Promise<OutletWithAssessmentCount[]> {
+  const outlets = await db.outlet.findMany({
     orderBy: { name: "asc" },
     include: { _count: { select: { assessments: true } } },
   });
+
+  return outlets as unknown as OutletWithAssessmentCount[];
+}
+
+export async function getOutletsPage(page: number, pageSize: number): Promise<{ outlets: OutletWithAssessmentCount[]; total: number }> {
+  const [outlets, total] = await Promise.all([
+    db.outlet.findMany({
+      orderBy: { name: "asc" },
+      include: { _count: { select: { assessments: true } } },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    db.outlet.count(),
+  ]);
+
+  return { outlets: outlets as unknown as OutletWithAssessmentCount[], total };
 }
 
 export async function createOutlet(data: { name: string; location?: string }) {

@@ -1,20 +1,54 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createOutlet, updateOutlet, deleteOutlet } from "@/lib/actions/outlets";
-import { Plus, MapPin, Building2, Pencil, Trash2, X, Check } from "lucide-react";
+import { Plus, MapPin, Building2, Pencil, Trash2, X, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Outlet } from "@prisma/client";
 
 type OutletWithCount = Outlet & { _count: { assessments: number } };
 
-export default function OutletsClient({ outlets: initialOutlets }: { outlets: OutletWithCount[] }) {
+function getVisiblePages(current: number, total: number): Array<number | "..."> {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+  if (current <= 3) return [1, 2, 3, 4, "...", total];
+  if (current >= total - 2) return [1, "...", total - 3, total - 2, total - 1, total];
+  return [1, "...", current - 1, current, current + 1, "...", total];
+}
+
+export default function OutletsClient({
+  outlets: initialOutlets,
+  page,
+  pageSize,
+  total,
+}: {
+  outlets: OutletWithCount[];
+  page: number;
+  pageSize: number;
+  total: number;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const visiblePages = getVisiblePages(page, totalPages);
+
+  const setPage = (nextPage: number) => {
+    const target = Math.min(totalPages, Math.max(1, nextPage));
+    const params = new URLSearchParams(searchParams.toString());
+    if (target === 1) params.delete("page");
+    else params.set("page", String(target));
+    router.push(params.toString() ? `${pathname}?${params.toString()}` : pathname);
+  };
 
   const resetForm = () => {
     setName("");
@@ -60,10 +94,10 @@ export default function OutletsClient({ outlets: initialOutlets }: { outlets: Ou
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-5 sm:space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Clinic Outlets</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Clinic Outlets</h1>
           <p className="text-sm text-slate-500 mt-1">Manage Sahakar Smart Clinic locations and view assessment activity</p>
         </div>
         <button
@@ -76,7 +110,7 @@ export default function OutletsClient({ outlets: initialOutlets }: { outlets: Ou
       </div>
 
       {showForm && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm ring-1 ring-slate-100">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm ring-1 ring-slate-100">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-slate-900">{editingId ? "Edit Outlet" : "Create New Outlet"}</h2>
             <button onClick={resetForm} className="text-slate-400 hover:text-slate-600 transition-colors">
@@ -142,20 +176,20 @@ export default function OutletsClient({ outlets: initialOutlets }: { outlets: Ou
         </div>
       )}
 
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="min-w-[680px] w-full text-sm">
             <thead className="bg-slate-50/80 border-b border-slate-100">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Outlet Details</th>
-                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Activity</th>
-                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-500">Manage</th>
+                <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Outlet Details</th>
+                <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Activity</th>
+                <th className="px-4 sm:px-6 py-3 sm:py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-500">Manage</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {initialOutlets.map((o) => (
                 <tr key={o.id} className="group hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4">
+                  <td className="px-4 sm:px-6 py-3 sm:py-4">
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 group-hover:bg-teal-50 group-hover:text-teal-600 transition-colors">
                         <Building2 className="h-5 w-5" />
@@ -169,14 +203,14 @@ export default function OutletsClient({ outlets: initialOutlets }: { outlets: Ou
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 sm:px-6 py-3 sm:py-4">
                     <div className="flex items-center gap-2">
                        <span className="text-lg font-bold text-slate-900 tabular-nums">{o._count.assessments}</span>
                        <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">Assessments</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <td className="px-4 sm:px-6 py-3 sm:py-4 text-right">
+                    <div className="flex items-center justify-end gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       <button 
                         onClick={() => handleEdit(o)} 
                         className="p-2 rounded-lg text-slate-400 hover:text-teal-600 hover:bg-teal-50 transition-all"
@@ -209,6 +243,56 @@ export default function OutletsClient({ outlets: initialOutlets }: { outlets: Ou
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+        <p className="text-xs sm:text-sm text-slate-500">
+          Showing <span className="font-semibold text-slate-700">{initialOutlets.length === 0 ? 0 : (page - 1) * pageSize + 1}</span>
+          {" "}-{" "}
+          <span className="font-semibold text-slate-700">{Math.min(page * pageSize, total)}</span>
+          {" "}of{" "}
+          <span className="font-semibold text-slate-700">{total}</span>
+        </p>
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={() => setPage(page - 1)}
+            disabled={page <= 1}
+            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs sm:text-sm font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Prev
+          </button>
+          <div className="flex items-center gap-1">
+            {visiblePages.map((p, idx) =>
+              p === "..." ? (
+                <span key={`ellipsis-${idx}`} className="px-1 text-xs sm:text-sm text-slate-400">
+                  ...
+                </span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={cn(
+                    "min-w-8 rounded-md border px-2 py-1 text-xs sm:text-sm font-semibold",
+                    p === page
+                      ? "border-teal-600 bg-teal-600 text-white"
+                      : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                  )}
+                >
+                  {p}
+                </button>
+              )
+            )}
+          </div>
+          <button
+            onClick={() => setPage(page + 1)}
+            disabled={page >= totalPages}
+            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs sm:text-sm font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </div>

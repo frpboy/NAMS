@@ -10,9 +10,9 @@ type AssessmentData = {
   occupation?: string | null;
   place?: string | null;
   outletName: string;
-  height: number;
-  weight: number;
-  bmi: number;
+  height: number | null;
+  weight: number | null;
+  bmi: number | null;
   selectedTests: { name: string; value?: string }[];
   variationResults?: string | null;
   dietPlanNotes?: string | null;
@@ -85,6 +85,7 @@ export function generatePatientPDF(data: AssessmentData): jsPDF {
 
   // Current Biometrics
   const bmiCategory =
+    data.bmi === null ? null :
     data.bmi < 18.5 ? "Underweight" :
     data.bmi < 25 ? "Normal" :
     data.bmi < 30 ? "Overweight" : "Obese";
@@ -93,7 +94,7 @@ export function generatePatientPDF(data: AssessmentData): jsPDF {
   infoRow({
     Height: data.height ? `${data.height} cm` : "N/A",
     Weight: data.weight ? `${data.weight} kg` : "N/A",
-    BMI: data.bmi ? `${data.bmi} (${bmiCategory})` : "N/A",
+    BMI: data.bmi ? `${data.bmi} (${bmiCategory ?? "N/A"})` : "N/A",
   });
 
   // Lab Results

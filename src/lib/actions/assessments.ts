@@ -1,10 +1,53 @@
 "use server";
 
+import type { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { assessmentSchema } from "@/lib/validations";
 import { calculateBMI } from "@/lib/utils/bmi-calculator";
 import { createLog } from "./audit";
+
+type AssessmentWithRelations = Prisma.AssessmentGetPayload<{
+  include: {
+    patient: {
+      include: {
+        assessments: {
+          orderBy: {
+            date: "desc";
+          };
+          include: {
+            outlet: {
+              select: {
+                name: true;
+              };
+            };
+          };
+        };
+      };
+    };
+    outlet: true;
+    dietPlan: true;
+  };
+}>;
+
+type AssessmentListItem = Prisma.AssessmentGetPayload<{
+  include: {
+    patient: {
+      select: {
+        name: true;
+        contactNumber: true;
+        age: true;
+        sex: true;
+        place: true;
+      };
+    };
+    outlet: {
+      select: {
+        name: true;
+      };
+    };
+  };
+}>;
 
 export async function createAssessment(data: {
   patientId: string;
@@ -104,8 +147,10 @@ export async function deleteAssessment(id: string) {
   return { success: true };
 }
 
-export async function getAssessment(id: string) {
-  return db.assessment.findUnique({
+export async function getAssessment(
+  id: string
+): Promise<AssessmentWithRelations | null> {
+  const assessment = await db.assessment.findUnique({
     where: { id },
     include: {
       patient: {
@@ -120,6 +165,8 @@ export async function getAssessment(id: string) {
       dietPlan: true,
     },
   });
+
+  return assessment as unknown as AssessmentWithRelations | null;
 }
 
 export async function getAssessments(filters?: {
@@ -127,7 +174,8 @@ export async function getAssessments(filters?: {
   dateFrom?: Date;
   dateTo?: Date;
   patientName?: string;
-}) {
+  take?: number;
+}): Promise<AssessmentListItem[]> {
   const where: Record<string, unknown> = {};
 
   if (filters?.outletId) {
@@ -144,13 +192,15 @@ export async function getAssessments(filters?: {
     };
   }
 
-  return db.assessment.findMany({
+  const assessments = await db.assessment.findMany({
     where,
     include: {
-      patient: { select: { name: true, contactNumber: true, age: true, sex: true } },
+      patient: { select: { name: true, contactNumber: true, age: true, sex: true, place: true } },
       outlet: { select: { name: true } },
     },
     orderBy: { date: "desc" },
-    take: 100, // Limit to 100 recent for performance
+    take: filters?.take ?? 20,
   });
+
+  return assessments as unknown as AssessmentListItem[];
 }

@@ -1,25 +1,35 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { exportToExcel } from "@/lib/utils/excel-export";
-import { generatePatientPDF } from "@/lib/utils/pdf-export";
-import { 
-  Download, 
-  Search, 
-  SlidersHorizontal, 
-  Eye, 
-  Pencil, 
-  ChevronUp, 
-  ChevronDown, 
+import {
+  Download,
+  Search,
+  SlidersHorizontal,
+  ChevronUp,
+  ChevronDown,
   Settings2,
   Check,
   X
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { cn } from "@/lib/cn";
-
-type AssessmentWithRelations = any; // Simplify for brevity, should use proper type
+import { formatDateGB } from "@/lib/utils/date-format";
+type ReportAssessment = {
+  id: string;
+  date: string;
+  outletId: string;
+  bmi: number | null;
+  selectedTests: unknown[];
+  needsDietPlan: string;
+  patient: {
+    name: string | null;
+    contactNumber: string | null;
+    place: string | null;
+  };
+  outlet: {
+    name: string | null;
+  };
+};
 
 const ALL_COLUMNS = [
   { id: "date", label: "Date" },
@@ -36,7 +46,7 @@ export default function ReportsContent({
   initialAssessments,
   outlets,
 }: {
-  initialAssessments: AssessmentWithRelations[];
+  initialAssessments: ReportAssessment[];
   outlets: { id: string; name: string }[];
 }) {
   // Filters
@@ -70,17 +80,20 @@ export default function ReportsContent({
     }
   };
 
-  const filteredAndSorted = useMemo(() => {
+  const filteredAndSorted = useMemo<ReportAssessment[]>(() => {
     let result = initialAssessments.filter((a) => {
       if (outletFilter && a.outletId !== outletFilter) return false;
+      const patientName = a.patient.name ?? "";
+      const patientContact = a.patient.contactNumber ?? "";
       if (
         patientSearch &&
-        !a.patient.name.toLowerCase().includes(patientSearch.toLowerCase()) &&
-        !a.patient.contactNumber.includes(patientSearch)
+        !patientName.toLowerCase().includes(patientSearch.toLowerCase()) &&
+        !patientContact.includes(patientSearch)
       )
         return false;
-      
+
       const aDate = new Date(a.date);
+      if (Number.isNaN(aDate.getTime())) return false;
       if (dateFrom && aDate < new Date(dateFrom)) return false;
       if (dateTo) {
         const end = new Date(dateTo);
@@ -92,13 +105,15 @@ export default function ReportsContent({
 
     // Sort
     result.sort((a, b) => {
-      let valA: any = a[sortField];
-      let valB: any = b[sortField];
+      let valA: string | number = "";
+      let valB: string | number = "";
 
-      if (sortField === "patient") { valA = a.patient.name; valB = b.patient.name; }
-      if (sortField === "contact") { valA = a.patient.contactNumber; valB = b.patient.contactNumber; }
-      if (sortField === "place") { valA = a.patient.place; valB = b.patient.place; }
-      if (sortField === "outlet") { valA = a.outlet.name; valB = b.outlet.name; }
+      if (sortField === "date") { valA = new Date(a.date).getTime(); valB = new Date(b.date).getTime(); }
+      if (sortField === "patient") { valA = (a.patient.name ?? "").toLowerCase(); valB = (b.patient.name ?? "").toLowerCase(); }
+      if (sortField === "contact") { valA = (a.patient.contactNumber ?? "").toLowerCase(); valB = (b.patient.contactNumber ?? "").toLowerCase(); }
+      if (sortField === "place") { valA = (a.patient.place ?? "").toLowerCase(); valB = (b.patient.place ?? "").toLowerCase(); }
+      if (sortField === "outlet") { valA = (a.outlet.name ?? "").toLowerCase(); valB = (b.outlet.name ?? "").toLowerCase(); }
+      if (sortField === "bmi") { valA = a.bmi ?? -1; valB = b.bmi ?? -1; }
       if (sortField === "diet") { valA = a.needsDietPlan; valB = b.needsDietPlan; }
 
       if (valA < valB) return sortOrder === "asc" ? -1 : 1;
@@ -109,10 +124,33 @@ export default function ReportsContent({
     return result;
   }, [initialAssessments, outletFilter, patientSearch, dateFrom, dateTo, sortField, sortOrder]);
 
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      const { exportToExcel } = await import("@/lib/utils/excel-export");
+      const { buffer, filename } = await exportToExcel(filteredAndSorted);
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      toast.success("Dataset exported");
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to export dataset");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       {/* Action Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-slate-500">
             <SlidersHorizontal className="h-4 w-4" />
@@ -154,11 +192,12 @@ export default function ReportsContent({
         </div>
 
         <button
-          onClick={() => {}} // Placeholder for export
-          className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-teal-700 transition-all"
+          onClick={handleExport}
+          disabled={exporting || filteredAndSorted.length === 0}
+          className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-teal-700 transition-all disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Download className="h-4 w-4" />
-          Export Dataset
+          {exporting ? "Exporting..." : "Export Dataset"}
         </button>
       </div>
 
@@ -193,9 +232,9 @@ export default function ReportsContent({
       </div>
 
       {/* Customizable & Sortable Table */}
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="min-w-[920px] w-full text-sm">
             <thead className="bg-slate-50/80 border-b border-slate-100">
               <tr>
                 {visibleColumns.includes("date") && (
@@ -256,20 +295,27 @@ export default function ReportsContent({
             <tbody className="divide-y divide-slate-50">
               {filteredAndSorted.map((a) => (
                 <tr key={a.id} className="hover:bg-slate-50/50 transition-colors group">
-                  {visibleColumns.includes("date") && <td className="px-4 py-3 text-slate-500">{new Date(a.date).toLocaleDateString("en-GB")}</td>}
-                  {visibleColumns.includes("patient") && <td className="px-4 py-3 font-bold text-slate-900 uppercase">{a.patient.name}</td>}
-                  {visibleColumns.includes("contact") && <td className="px-4 py-3 font-mono text-xs text-slate-500">{a.patient.contactNumber}</td>}
-                  {visibleColumns.includes("place") && <td className="px-4 py-3 text-slate-600 uppercase">{a.patient.place}</td>}
-                  {visibleColumns.includes("outlet") && <td className="px-4 py-3 text-slate-600 uppercase">{a.outlet.name}</td>}
-                  {visibleColumns.includes("bmi") && <td className="px-4 py-3">{a.bmi ? a.bmi.toFixed(1) : "—"}</td>}
+                  {visibleColumns.includes("date") && <td className="px-4 py-3 text-slate-500">{formatDateGB(a.date)}</td>}
+                  {visibleColumns.includes("patient") && <td className="px-4 py-3 font-bold text-slate-900 uppercase">{a.patient.name ?? "—"}</td>}
+                  {visibleColumns.includes("contact") && <td className="px-4 py-3 font-mono text-xs text-slate-500">{a.patient.contactNumber ?? "—"}</td>}
+                  {visibleColumns.includes("place") && <td className="px-4 py-3 text-slate-600 uppercase">{a.patient.place ?? "—"}</td>}
+                  {visibleColumns.includes("outlet") && <td className="px-4 py-3 text-slate-600 uppercase">{a.outlet.name ?? "—"}</td>}
+                  {visibleColumns.includes("bmi") && <td className="px-4 py-3">{a.bmi !== null ? a.bmi.toFixed(1) : "—"}</td>}
                   {visibleColumns.includes("tests") && (
                     <td className="px-4 py-3 text-xs text-slate-400">
                       {Array.isArray(a.selectedTests)
                         ? a.selectedTests
-                            .map((t: any) => {
-                              const name = typeof t === "string" ? t : t.name;
-                              const value = typeof t === "string" ? undefined : t.value;
-                              return `${name}${value ? `: ${value}` : ""}`;
+                            .map((t) => {
+                              if (t === null || typeof t === "number" || typeof t === "boolean") {
+                                return "Unknown";
+                              }
+                              if (typeof t === "string") return t;
+                              if (typeof t !== "object") return "Unknown";
+
+                              const valueObj = t as { name?: unknown; value?: unknown };
+                              const name = typeof valueObj.name === "string" ? valueObj.name : "Unknown";
+                              const value = typeof valueObj.value === "string" ? valueObj.value : undefined;
+                              return `${name ?? "Unknown"}${value ? `: ${value}` : ""}`;
                             })
                             .join(", ")
                         : ""}

@@ -114,7 +114,7 @@ export default function AssessmentEditForm({ assessment, outlets, testsByCategor
         age: parseInt(age),
         sex,
         occupation: occupation || undefined,
-        place: place.trim() || null,
+        place: place.trim(),
       });
 
       const result = await updateAssessment(assessment.id, {

@@ -1,9 +1,6 @@
 import { getAuditLogs } from "@/lib/actions/audit";
 import { auth } from "@/lib/auth/auth";
 import { redirect } from "next/navigation";
-import { History, User, Activity, Clock } from "lucide-react";
-
-export const dynamic = "force-dynamic";
 
 export default async function AuditLogsPage() {
   const session = await auth();

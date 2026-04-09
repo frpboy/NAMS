@@ -1,17 +1,51 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createMasterTest, updateMasterTest, toggleMasterTest, deleteMasterTest } from "@/lib/actions/master-tests";
-import { Plus, FlaskConical, Pencil, Trash2, X, Check, Power, PowerOff, Info, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, FlaskConical, Pencil, Trash2, X, Check, Power, PowerOff, Info, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { MasterTest } from "@prisma/client";
 
-export default function TestsClient({ tests: initialTests }: { tests: MasterTest[] }) {
+function getVisiblePages(current: number, total: number): Array<number | "..."> {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+  if (current <= 3) return [1, 2, 3, 4, "...", total];
+  if (current >= total - 2) return [1, "...", total - 3, total - 2, total - 1, total];
+  return [1, "...", current - 1, current, current + 1, "...", total];
+}
+
+export default function TestsClient({
+  tests: initialTests,
+  page,
+  pageSize,
+  total,
+}: {
+  tests: MasterTest[];
+  page: number;
+  pageSize: number;
+  total: number;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [expandedTest, setExpandedTest] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const visiblePages = getVisiblePages(page, totalPages);
+
+  const setPage = (nextPage: number) => {
+    const target = Math.min(totalPages, Math.max(1, nextPage));
+    const params = new URLSearchParams(searchParams.toString());
+    if (target === 1) params.delete("page");
+    else params.set("page", String(target));
+    router.push(params.toString() ? `${pathname}?${params.toString()}` : pathname);
+  };
 
   // Form State
   const [formData, setFormData] = useState({
@@ -107,10 +141,10 @@ export default function TestsClient({ tests: initialTests }: { tests: MasterTest
   for (const test of initialTests) { if (!grouped[test.category]) grouped[test.category] = []; grouped[test.category].push(test); }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-5 sm:space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Test Master List</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Test Master List</h1>
           <p className="text-sm text-slate-500 mt-1">Configure lab parameters, reference ranges, and clinical guidance</p>
         </div>
         <button
@@ -123,7 +157,7 @@ export default function TestsClient({ tests: initialTests }: { tests: MasterTest
       </div>
 
       {showForm && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm ring-1 ring-slate-100">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm ring-1 ring-slate-100">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-slate-900">{editingId ? "Edit Test Details" : "New Test Configuration"}</h2>
             <button onClick={resetForm} className="text-slate-400 hover:text-slate-600 transition-colors">
@@ -348,7 +382,7 @@ export default function TestsClient({ tests: initialTests }: { tests: MasterTest
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 sm:gap-4">
                         <div className="hidden sm:flex items-center gap-3 text-[11px] font-medium text-slate-400">
                           {test.maleMin !== null && (
                             <div className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-600 border border-blue-100">
@@ -395,7 +429,7 @@ export default function TestsClient({ tests: initialTests }: { tests: MasterTest
                     </div>
 
                     {isExpanded && (
-                      <div className="px-16 pb-6 pt-2 animate-in slide-in-from-top-2 duration-300">
+                      <div className="px-4 sm:px-16 pb-4 sm:pb-6 pt-2 animate-in slide-in-from-top-2 duration-300">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
                           <div className="space-y-4">
                             <div>
@@ -450,6 +484,56 @@ export default function TestsClient({ tests: initialTests }: { tests: MasterTest
           <p className="text-sm font-medium text-slate-500">No parameters configured yet. Start by adding your first lab test.</p>
         </div>
       )}
+
+      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+        <p className="text-xs sm:text-sm text-slate-500">
+          Showing <span className="font-semibold text-slate-700">{initialTests.length === 0 ? 0 : (page - 1) * pageSize + 1}</span>
+          {" "}-{" "}
+          <span className="font-semibold text-slate-700">{Math.min(page * pageSize, total)}</span>
+          {" "}of{" "}
+          <span className="font-semibold text-slate-700">{total}</span>
+        </p>
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={() => setPage(page - 1)}
+            disabled={page <= 1}
+            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs sm:text-sm font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Prev
+          </button>
+          <div className="flex items-center gap-1">
+            {visiblePages.map((p, idx) =>
+              p === "..." ? (
+                <span key={`ellipsis-${idx}`} className="px-1 text-xs sm:text-sm text-slate-400">
+                  ...
+                </span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={cn(
+                    "min-w-8 rounded-md border px-2 py-1 text-xs sm:text-sm font-semibold",
+                    p === page
+                      ? "border-teal-600 bg-teal-600 text-white"
+                      : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                  )}
+                >
+                  {p}
+                </button>
+              )
+            )}
+          </div>
+          <button
+            onClick={() => setPage(page + 1)}
+            disabled={page >= totalPages}
+            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs sm:text-sm font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

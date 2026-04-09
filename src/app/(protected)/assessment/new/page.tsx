@@ -5,8 +5,6 @@ import { getMasterTestsByCategory } from "@/lib/actions/master-tests";
 import { getActiveDietPlans } from "@/lib/actions/diet-plans";
 import AssessmentForm from "./assessment-form";
 
-export const dynamic = "force-dynamic";
-
 export default async function NewAssessmentPage() {
   const session = await auth();
   if (!session) redirect("/login");

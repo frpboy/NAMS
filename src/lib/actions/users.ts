@@ -18,6 +18,26 @@ export async function getUsers() {
   });
 }
 
+export async function getUsersPage(page: number, pageSize: number) {
+  const [users, total] = await Promise.all([
+    db.user.findMany({
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    db.user.count(),
+  ]);
+
+  return { users, total };
+}
+
 export async function createUser(data: {
   name: string;
   email: string;

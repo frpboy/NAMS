@@ -1,9 +1,26 @@
 import ExcelJS from "exceljs";
-import type { Assessment, Patient, Outlet } from "@prisma/client";
 
-type AssessmentWithRelations = Assessment & {
-  patient: Pick<Patient, "name" | "contactNumber" | "age" | "sex">;
-  outlet: Pick<Outlet, "name">;
+type AssessmentWithRelations = {
+  date: Date | string;
+  height?: number | null;
+  weight?: number | null;
+  bmi?: number | null;
+  selectedTests?: unknown;
+  variationResults?: string | null;
+  dietPlanNotes?: string | null;
+  needsDietPlan: string;
+  remarks?: string | null;
+  resultReceivedAt?: Date | string | null;
+  interactionAt?: Date | string | null;
+  patient: {
+    name: string | null;
+    contactNumber: string | null;
+    age?: number | null;
+    sex?: string | null;
+  };
+  outlet: {
+    name: string | null;
+  };
 };
 
 export async function exportToExcel(
@@ -46,11 +63,11 @@ export async function exportToExcel(
   for (const a of assessments) {
     worksheet.addRow({
       date: formatDate(a.date),
-      patientName: a.patient.name.toUpperCase(),
-      contactNumber: a.patient.contactNumber,
-      age: a.patient.age,
-      sex: a.patient.sex,
-      outlet: a.outlet.name.toUpperCase(),
+      patientName: (a.patient.name ?? "Unknown").toUpperCase(),
+      contactNumber: a.patient.contactNumber ?? "",
+      age: a.patient.age ?? "N/A",
+      sex: a.patient.sex ?? "N/A",
+      outlet: (a.outlet.name ?? "Unknown").toUpperCase(),
       height: a.height || "N/A",
       weight: a.weight || "N/A",
       bmi: a.bmi || "N/A",
@@ -102,7 +119,9 @@ export async function exportToExcel(
   return { buffer, filename: `${filename}-${new Date().toISOString().slice(0, 10)}.xlsx` };
 }
 
-function formatDate(date: Date | string): string {
+function formatDate(date?: Date | string | null): string {
+  if (!date) return "";
   const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return "";
   return d.toLocaleDateString("en-GB");
 }

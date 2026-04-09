@@ -1,14 +1,41 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createUser, updateUserRole, deleteUser } from "@/lib/actions/users";
-import { Plus, User, Mail, Shield, Calendar, Trash2, X, Check, Eye, EyeOff } from "lucide-react";
+import { Plus, User, Mail, Shield, Calendar, Trash2, X, Check, Eye, EyeOff, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Role } from "@prisma/client";
+import { formatDateGB } from "@/lib/utils/date-format";
 
 type UserData = { id: string; name: string; email: string; role: Role; createdAt: Date };
 
-export default function UsersClient({ users }: { users: UserData[] }) {
+function getVisiblePages(current: number, total: number): Array<number | "..."> {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+  if (current <= 3) return [1, 2, 3, 4, "...", total];
+  if (current >= total - 2) return [1, "...", total - 3, total - 2, total - 1, total];
+  return [1, "...", current - 1, current, current + 1, "...", total];
+}
+
+export default function UsersClient({
+  users,
+  page,
+  pageSize,
+  total,
+  dbError,
+}: {
+  users: UserData[];
+  page: number;
+  pageSize: number;
+  total: number;
+  dbError?: string | null;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -17,6 +44,16 @@ export default function UsersClient({ users }: { users: UserData[] }) {
   const [role, setRole] = useState<"ADMIN" | "NUTRITIONIST">("NUTRITIONIST");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const visiblePages = getVisiblePages(page, totalPages);
+
+  const setPage = (nextPage: number) => {
+    const target = Math.min(totalPages, Math.max(1, nextPage));
+    const params = new URLSearchParams(searchParams.toString());
+    if (target === 1) params.delete("page");
+    else params.set("page", String(target));
+    router.push(params.toString() ? `${pathname}?${params.toString()}` : pathname);
+  };
 
   const resetForm = () => { 
     setName(""); 
@@ -58,10 +95,10 @@ export default function UsersClient({ users }: { users: UserData[] }) {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-5 sm:space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">User Management</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">User Management</h1>
           <p className="text-sm text-slate-500 mt-1">Control access for nutritionists and system administrators</p>
         </div>
         <button 
@@ -74,7 +111,7 @@ export default function UsersClient({ users }: { users: UserData[] }) {
       </div>
 
       {showForm && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm ring-1 ring-slate-100">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm ring-1 ring-slate-100">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-slate-900">Add Account</h2>
             <button onClick={resetForm} className="text-slate-400 hover:text-slate-600 transition-colors">
@@ -178,21 +215,27 @@ export default function UsersClient({ users }: { users: UserData[] }) {
         </div>
       )}
 
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      {dbError && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {dbError}
+        </div>
+      )}
+
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="min-w-[720px] w-full text-sm">
             <thead className="bg-slate-50/80 border-b border-slate-100">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Team Member</th>
-                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Access Level</th>
-                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Joined Date</th>
-                <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-500">Manage</th>
+                <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Team Member</th>
+                <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Access Level</th>
+                <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Joined Date</th>
+                <th className="px-4 sm:px-6 py-3 sm:py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-500">Manage</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {users.map((u) => (
                 <tr key={u.id} className="group hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4">
+                  <td className="px-4 sm:px-6 py-3 sm:py-4">
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal-100 text-teal-700 font-bold text-xs group-hover:scale-110 transition-transform">
                         {u.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
@@ -203,7 +246,7 @@ export default function UsersClient({ users }: { users: UserData[] }) {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 sm:px-6 py-3 sm:py-4">
                     <select 
                       value={u.role} 
                       onChange={(e) => handleRoleChange(u.id, e.target.value as Role)} 
@@ -218,16 +261,16 @@ export default function UsersClient({ users }: { users: UserData[] }) {
                       <option value="NUTRITIONIST">Nutritionist</option>
                     </select>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 sm:px-6 py-3 sm:py-4">
                     <div className="flex items-center gap-2 text-slate-500">
                       <Calendar className="h-3.5 w-3.5" />
-                      <span className="tabular-nums">{new Date(u.createdAt).toLocaleDateString("en-GB")}</span>
+                      <span className="tabular-nums">{formatDateGB(u.createdAt)}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-4 sm:px-6 py-3 sm:py-4 text-right">
                     <button 
                       onClick={() => handleDelete(u.id)} 
-                      className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
+                      className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                       title="Delete User"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -244,6 +287,56 @@ export default function UsersClient({ users }: { users: UserData[] }) {
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+        <p className="text-xs sm:text-sm text-slate-500">
+          Showing <span className="font-semibold text-slate-700">{users.length === 0 ? 0 : (page - 1) * pageSize + 1}</span>
+          {" "}-{" "}
+          <span className="font-semibold text-slate-700">{Math.min(page * pageSize, total)}</span>
+          {" "}of{" "}
+          <span className="font-semibold text-slate-700">{total}</span>
+        </p>
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={() => setPage(page - 1)}
+            disabled={page <= 1}
+            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs sm:text-sm font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Prev
+          </button>
+          <div className="flex items-center gap-1">
+            {visiblePages.map((p, idx) =>
+              p === "..." ? (
+                <span key={`ellipsis-${idx}`} className="px-1 text-xs sm:text-sm text-slate-400">
+                  ...
+                </span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={cn(
+                    "min-w-8 rounded-md border px-2 py-1 text-xs sm:text-sm font-semibold",
+                    p === page
+                      ? "border-teal-600 bg-teal-600 text-white"
+                      : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                  )}
+                >
+                  {p}
+                </button>
+              )
+            )}
+          </div>
+          <button
+            onClick={() => setPage(page + 1)}
+            disabled={page >= totalPages}
+            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs sm:text-sm font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </div>

@@ -100,6 +100,7 @@ function NavLink({
   return (
     <Link
       href={href}
+      prefetch={false}
       title={isCollapsed ? label : ""}
       className={cn(
         "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200 group relative",

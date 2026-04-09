@@ -4,8 +4,6 @@ import { auth } from "@/lib/auth/auth";
 import AssessmentDetailClient from "./assessment-detail-client";
 import { Suspense } from "react";
 
-export const dynamic = "force-dynamic";
-
 export default async function AssessmentDetailPage({
   params,
 }: {

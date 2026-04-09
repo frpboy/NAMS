@@ -305,7 +305,9 @@ function Step1Patient({
 
   useEffect(() => {
     const fetchPlaces = async () => {
-      if (place.length >= 2) {
+      const normalizedPlace = place.trim();
+
+      if (normalizedPlace.length >= 3) {
         const results = await getUniquePlaces(place);
         setSuggestions(results);
         setShowSuggestions(true);
@@ -337,7 +339,7 @@ function Step1Patient({
           </span>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className={LABEL}>Full Name *</label>
           <input type="text" value={name} onChange={(e) => setName(e.target.value)} className={INPUT} />
@@ -364,7 +366,7 @@ function Step1Patient({
           ))}
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className={LABEL}>Occupation</label>
           <input type="text" value={occupation} onChange={(e) => setOccupation(e.target.value)} className={INPUT} placeholder="Optional" />
@@ -404,7 +406,7 @@ function Step2Vitals({ height, setHeight, weight, setWeight, bmi }: any) {
   return (
     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <h2 className="text-lg font-bold text-slate-800">Vitals & Measurements</h2>
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="space-y-4">
           <div>
             <label className={LABEL}>Height (cm)</label>
@@ -544,7 +546,7 @@ function Step4Clinical({ outlets, outletId, setOutletId, needsDietPlan, setNeeds
   return (
     <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <h2 className="text-lg font-bold text-slate-800">Finalization</h2>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className={LABEL}>Outlet *</label>
           <select value={outletId} onChange={(e) => setOutletId(e.target.value)} className={INPUT}>
@@ -578,7 +580,7 @@ function Step4Clinical({ outlets, outletId, setOutletId, needsDietPlan, setNeeds
           </select>
         </div>
       )}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className={LABEL}>Result Received *</label>
           <input type="datetime-local" value={resultReceivedAt} onChange={(e) => setResultReceivedAt(e.target.value)} className={INPUT} />

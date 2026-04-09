@@ -3,8 +3,6 @@ import DietPlansClient from "./diet-plans-client";
 import { auth } from "@/lib/auth/auth";
 import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-
 export default async function DietPlansPage() {
   const session = await auth();
   if (!session) redirect("/login");

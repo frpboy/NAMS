@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { exportToExcel } from "@/lib/utils/excel-export";
-import { generatePatientPDF } from "@/lib/utils/pdf-export";
-import { Download, FileText, Search, SlidersHorizontal, Eye, Pencil } from "lucide-react";
+import { useState } from "react";
+import { FileText, Eye, Pencil } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import type { Assessment, Patient, Outlet } from "@prisma/client";
+import { formatDateGB } from "@/lib/utils/date-format";
 
 type AssessmentWithRelations = Assessment & {
   patient: Pick<Patient, "name" | "contactNumber" | "age" | "sex">;
@@ -15,64 +14,17 @@ type AssessmentWithRelations = Assessment & {
 
 export default function DashboardWithFilters({
   initialAssessments,
-  outlets,
 }: {
   initialAssessments: AssessmentWithRelations[];
-  outlets: { id: string; name: string }[];
 }) {
-  const [outletFilter, setOutletFilter] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [patientSearch, setPatientSearch] = useState("");
-  const [exporting, setExporting] = useState(false);
+  const [exportingPdfId, setExportingPdfId] = useState<string | null>(null);
 
-  const filtered = useMemo(() => {
-    return initialAssessments.filter((a) => {
-      if (outletFilter && a.outletId !== outletFilter) return false;
-      if (
-        patientSearch &&
-        !a.patient.name.toLowerCase().includes(patientSearch.toLowerCase()) &&
-        !a.patient.contactNumber.includes(patientSearch)
-      )
-        return false;
-      
-      const aDate = new Date(a.date);
-      if (dateFrom && aDate < new Date(dateFrom)) return false;
-      if (dateTo) {
-        const end = new Date(dateTo);
-        end.setHours(23, 59, 59, 999);
-        if (aDate > end) return false;
-      }
-      return true;
-    });
-  }, [initialAssessments, outletFilter, patientSearch, dateFrom, dateTo]);
-
-  const handleExport = async () => {
+  const handleViewPDF = async (a: AssessmentWithRelations) => {
     try {
-      setExporting(true);
-      const { buffer, filename } = await exportToExcel(filtered);
-      const blob = new Blob([buffer], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success("Excel export successful");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to export Excel");
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  const handleViewPDF = (a: AssessmentWithRelations) => {
-    try {
+      setExportingPdfId(a.id);
+      const { generatePatientPDF } = await import("@/lib/utils/pdf-export");
       const pdf = generatePatientPDF({
-        date: new Date(a.date).toLocaleDateString("en-GB"),
+        date: formatDateGB(a.date),
         patientName: a.patient.name,
         age: a.patient.age,
         sex: a.patient.sex,
@@ -88,82 +40,36 @@ export default function DashboardWithFilters({
         dietPlanNotes: a.dietPlanNotes,
         remarks: a.remarks,
         needsDietPlan: a.needsDietPlan,
-        resultReceivedAt: new Date(a.resultReceivedAt).toLocaleDateString("en-GB"),
-        interactionAt: new Date(a.interactionAt).toLocaleDateString("en-GB"),
+        resultReceivedAt: formatDateGB(a.resultReceivedAt),
+        interactionAt: formatDateGB(a.interactionAt),
       });
       pdf.save(`assessment-${a.patient.name}-${new Date(a.date).toISOString().slice(0, 10)}.pdf`);
       toast.success(`PDF for ${a.patient.name} generated`);
     } catch (err) {
       console.error(err);
       toast.error("Failed to generate PDF");
+    } finally {
+      setExportingPdfId(null);
     }
   };
 
   return (
     <div className="space-y-4">
-      {/* Header row */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-slate-500">
-          <SlidersHorizontal className="h-4 w-4" />
-          <span className="text-sm font-medium">
-            {filtered.length} assessment{filtered.length !== 1 ? "s" : ""}
-          </span>
+        <div>
+          <h2 className="text-sm font-semibold text-slate-700">Recent Assessments</h2>
+          <p className="mt-0.5 text-sm text-slate-500">
+            Showing the latest {initialAssessments.length} records. Use Reports for full filtering and exports.
+          </p>
         </div>
-        <button
-          onClick={handleExport}
-          disabled={exporting || filtered.length === 0}
-          className="inline-flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-teal-700 disabled:opacity-40 disabled:cursor-not-allowed"
+        <Link
+          href="/reports"
+          className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:bg-slate-50"
         >
-          <Download className="h-4 w-4" />
-          {exporting ? "Exporting…" : "Export Excel"}
-        </button>
+          Open Reports
+        </Link>
       </div>
 
-      {/* Filters */}
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Search */}
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              value={patientSearch}
-              onChange={(e) => setPatientSearch(e.target.value)}
-              placeholder="Search patient…"
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-8 pr-3 text-sm placeholder:text-slate-400 focus:bg-white"
-            />
-          </div>
-          {/* Outlet */}
-          <select
-            value={outletFilter}
-            onChange={(e) => setOutletFilter(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:bg-white"
-          >
-            <option value="">All Outlets</option>
-            {outlets.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.name}
-              </option>
-            ))}
-          </select>
-          {/* Date from */}
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:bg-white"
-          />
-          {/* Date to */}
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:bg-white"
-          />
-        </div>
-      </div>
-
-      {/* Table */}
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -196,13 +102,13 @@ export default function DashboardWithFilters({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {filtered.map((a) => (
+              {initialAssessments.map((a) => (
                 <tr
                   key={a.id}
                   className="group hover:bg-slate-50/60 transition-colors"
                 >
                   <td className="px-4 py-3 text-slate-500 tabular-nums">
-                    {new Date(a.date).toLocaleDateString("en-GB")}
+                    {formatDateGB(a.date)}
                   </td>
                   <td className="px-4 py-3 font-medium text-slate-900 uppercase">
                     {a.patient.name}
@@ -248,16 +154,17 @@ export default function DashboardWithFilters({
                       </Link>
                       <button
                         onClick={() => handleViewPDF(a)}
+                        disabled={exportingPdfId === a.id}
                         className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
                       >
                         <FileText className="h-3.5 w-3.5" />
-                        PDF
+                        {exportingPdfId === a.id ? "Generating..." : "PDF"}
                       </button>
                     </div>
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && (
+              {initialAssessments.length === 0 && (
                 <tr>
                   <td
                     colSpan={8}
@@ -275,7 +182,7 @@ export default function DashboardWithFilters({
   );
 }
 
-function BMIBadge({ bmi }: { bmi: number }) {
+function BMIBadge({ bmi }: { bmi: number | null }) {
   if (!bmi) return <span className="text-slate-400">—</span>;
   const cls =
     bmi < 18.5

@@ -10,6 +10,19 @@ export async function getMasterTests() {
   });
 }
 
+export async function getMasterTestsPage(page: number, pageSize: number) {
+  const [tests, total] = await Promise.all([
+    db.masterTest.findMany({
+      orderBy: [{ category: "asc" }, { name: "asc" }],
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    db.masterTest.count(),
+  ]);
+
+  return { tests, total };
+}
+
 export async function getMasterTestsByCategory() {
   const tests = await db.masterTest.findMany({
     where: { isActive: true },

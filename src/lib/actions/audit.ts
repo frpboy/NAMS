@@ -1,7 +1,20 @@
 "use server";
 
+import type { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth/auth";
+
+type AuditLogWithUser = Prisma.AuditLogGetPayload<{
+  include: {
+    user: {
+      select: {
+        name: true;
+        email: true;
+        role: true;
+      };
+    };
+  };
+}>;
 
 export async function createLog(data: {
   action: string;
@@ -24,12 +37,14 @@ export async function createLog(data: {
   }
 }
 
-export async function getAuditLogs() {
-  return db.auditLog.findMany({
+export async function getAuditLogs(): Promise<AuditLogWithUser[]> {
+  const logs = await db.auditLog.findMany({
     include: {
       user: { select: { name: true, email: true, role: true } },
     },
     orderBy: { createdAt: "desc" },
     take: 500, // Limit for performance
   });
+
+  return logs as unknown as AuditLogWithUser[];
 }

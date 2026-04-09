@@ -39,7 +39,7 @@ export async function createOrUpdatePatient(data: {
   age: number;
   sex: string;
   occupation?: string;
-  place?: string | null;
+  place: string;
 }) {
   return db.patient.upsert({
     where: { contactNumber: data.contactNumber },
@@ -70,7 +70,7 @@ export async function getPatients(search?: string) {
 }
 
 export async function getUniquePlaces(search: string) {
-  if (search.length < 2) return [];
+  if (search.trim().length < 3) return [];
   
   const places = await db.patient.findMany({
     where: {
@@ -83,7 +83,7 @@ export async function getUniquePlaces(search: string) {
       place: true,
     },
     distinct: ["place"],
-    take: 5,
+    take: 4,
   });
 
   return places.map((p) => p.place).filter(Boolean);
