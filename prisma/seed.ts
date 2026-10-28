@@ -9,11 +9,19 @@ import { LAB_TESTS } from "../src/lib/utils/lab-reference-ranges";
 
 const prisma = new PrismaClient();
 
+function requireSeedSecret(name: string): string {
+  const value = process.env[name];
+  if (!value || value.length < 16) {
+    throw new Error(`${name} must be set to a unique secret of at least 16 characters before seeding.`);
+  }
+  return value;
+}
+
 async function main() {
   console.log("🌱 Seeding database...");
 
   // ─── Create Admin User ────────────────────────────────────────
-  const adminPassword = await bcrypt.hash("Zabnix@2025", 10);
+  const adminPassword = await bcrypt.hash(requireSeedSecret("SEED_ADMIN_PASSWORD"), 10);
 
   const admin = await prisma.user.upsert({
     where: { email: "frpboy12@gmail.com" },
@@ -28,7 +36,7 @@ async function main() {
   console.log(`✅ Admin created: ${admin.email}`);
 
   // ─── Create Main Sahakar Admin ────────────────────────────────
-  const mainAdminPassword = await bcrypt.hash("Zabnix@2025", 10);
+  const mainAdminPassword = await bcrypt.hash(requireSeedSecret("SEED_MAIN_ADMIN_PASSWORD"), 10);
   const mainAdmin = await prisma.user.upsert({
     where: { email: "sahakarsmartclinic@gmail.com" },
     update: {},
@@ -42,7 +50,7 @@ async function main() {
   console.log(`✅ Main Admin created: ${mainAdmin.email}`);
 
   // ─── Create Nutritionist User ─────────────────────────────────
-  const nutriPassword = await bcrypt.hash("sscdt@2026", 10);
+  const nutriPassword = await bcrypt.hash(requireSeedSecret("SEED_NUTRITIONIST_PASSWORD"), 10);
 
   const nutritionist = await prisma.user.upsert({
     where: { email: "sahakarsmartclinicdt@gmail.com" },
