@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createMasterTest, updateMasterTest, toggleMasterTest, deleteMasterTest } from "@/lib/actions/master-tests";
 import { Plus, FlaskConical, Pencil, Trash2, X, Check, Power, PowerOff, Info, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/cn";
-import type { MasterTest } from "@prisma/client";
+import type { MasterTest } from "@/generated/prisma/client";
 
 function getVisiblePages(current: number, total: number): Array<number | "..."> {
   if (total <= 7) {
