@@ -13,7 +13,7 @@ import {
   AlertCircle, Lightbulb, X, Search, Plus, Trash2, MapPin
 } from "lucide-react";
 import { cn } from "@/lib/cn";
-import type { Outlet, MasterTest, DietPlan } from "@prisma/client";
+import type { Outlet, MasterTest, DietPlan } from "@/generated/prisma/client";
 
 type Props = {
   outlets: (Outlet & { _count: { assessments: number } })[];
