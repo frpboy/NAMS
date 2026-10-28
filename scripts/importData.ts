@@ -1,7 +1,12 @@
-import { PrismaClient } from '@prisma/client';
+import "dotenv/config";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "../src/generated/prisma/client";
+import { resolveDatasourceUrl } from "../src/lib/db-url";
 import * as fs from 'fs';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: resolveDatasourceUrl() }),
+});
 
 async function importLegacyData() {
   console.log("Reading JSON file...");
