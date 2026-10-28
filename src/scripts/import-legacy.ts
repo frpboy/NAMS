@@ -1,8 +1,13 @@
-import { PrismaClient } from "@prisma/client";
+import "dotenv/config";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "../generated/prisma/client";
+import { resolveDatasourceUrl } from "../lib/db-url";
 import * as fs from "fs";
 import path from "path";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: resolveDatasourceUrl() }),
+});
 
 async function importLegacyData() {
   const filePath = path.join(process.cwd(), "NAMS_Import_File.json");
