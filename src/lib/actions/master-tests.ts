@@ -55,7 +55,7 @@ export async function createMasterTest(data: {
 }) {
   const result = masterTestSchema.safeParse(data);
   if (!result.success) {
-    return { error: result.error.errors[0].message };
+    return { error: result.error.issues[0].message };
   }
   await db.masterTest.create({ data: result.data });
   revalidatePath("/admin/tests");
@@ -83,7 +83,7 @@ export async function updateMasterTest(
 ) {
   const result = masterTestSchema.safeParse(data);
   if (!result.success) {
-    return { error: result.error.errors[0].message };
+    return { error: result.error.issues[0].message };
   }
   await db.masterTest.update({ where: { id }, data: result.data });
   revalidatePath("/admin/tests");
