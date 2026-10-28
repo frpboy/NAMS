@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createUser, updateUserRole, deleteUser } from "@/lib/actions/users";
 import { Plus, User, Mail, Shield, Calendar, Trash2, X, Check, Eye, EyeOff, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/cn";
-import type { Role } from "@prisma/client";
+import type { Role } from "@/generated/prisma/enums";
 import { formatDateGB } from "@/lib/utils/date-format";
 
 type UserData = { id: string; name: string; email: string; role: Role; createdAt: Date };
