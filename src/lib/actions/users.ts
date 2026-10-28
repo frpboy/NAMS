@@ -46,7 +46,7 @@ export async function createUser(data: {
 }) {
   const result = userSchema.safeParse(data);
   if (!result.success) {
-    return { error: result.error.errors[0].message };
+    return { error: result.error.issues[0].message };
   }
 
   const existing = await db.user.findUnique({
