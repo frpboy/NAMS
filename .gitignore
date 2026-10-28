@@ -43,3 +43,6 @@ next-env.d.ts
 
 .vercel
 .env*.local
+
+# Generated Prisma 7 client (created by prisma generate)
+/src/generated/prisma/
