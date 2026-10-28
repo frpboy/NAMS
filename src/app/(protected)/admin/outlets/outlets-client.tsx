@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createOutlet, updateOutlet, deleteOutlet } from "@/lib/actions/outlets";
 import { Plus, MapPin, Building2, Pencil, Trash2, X, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/cn";
-import type { Outlet } from "@prisma/client";
+import type { Outlet } from "@/generated/prisma/client";
 
 type OutletWithCount = Outlet & { _count: { assessments: number } };
 

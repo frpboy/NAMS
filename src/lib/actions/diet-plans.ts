@@ -28,7 +28,7 @@ export async function getActiveDietPlans() {
 export async function createDietPlan(data: z.infer<typeof dietPlanSchema>) {
   const result = dietPlanSchema.safeParse(data);
   if (!result.success) {
-    return { error: result.error.errors[0].message };
+    return { error: result.error.issues[0].message };
   }
   await db.dietPlan.create({ data: result.data });
   revalidatePath("/admin/diet-plans");
@@ -38,7 +38,7 @@ export async function createDietPlan(data: z.infer<typeof dietPlanSchema>) {
 export async function updateDietPlan(id: string, data: z.infer<typeof dietPlanSchema>) {
   const result = dietPlanSchema.safeParse(data);
   if (!result.success) {
-    return { error: result.error.errors[0].message };
+    return { error: result.error.issues[0].message };
   }
   await db.dietPlan.update({ where: { id }, data: result.data });
   revalidatePath("/admin/diet-plans");

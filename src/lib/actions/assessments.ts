@@ -1,6 +1,6 @@
 "use server";
 
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { assessmentSchema } from "@/lib/validations";
@@ -65,7 +65,7 @@ export async function createAssessment(data: {
 }) {
   const result = assessmentSchema.safeParse(data);
   if (!result.success) {
-    return { error: result.error.errors[0].message };
+    return { error: result.error.issues[0].message };
   }
 
   const bmi = (data.height && data.weight) ? calculateBMI(data.height, data.weight) : null;

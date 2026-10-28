@@ -4,7 +4,7 @@ import { useState } from "react";
 import { FileText, Eye, Pencil } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
-import type { Assessment, Patient, Outlet } from "@prisma/client";
+import type { Assessment, Patient, Outlet } from "@/generated/prisma/client";
 import { formatDateGB } from "@/lib/utils/date-format";
 
 type AssessmentWithRelations = Assessment & {

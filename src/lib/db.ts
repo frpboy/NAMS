@@ -1,25 +1,10 @@
-import { PrismaClient } from "@prisma/client";
-
-const resolveDatasourceUrl = () => {
-  const databaseUrl = process.env.DATABASE_URL;
-  const directUrl = process.env.DIRECT_URL;
-
-  // Explicit override for local debugging/tools.
-  if (process.env.USE_DIRECT_DATABASE_URL === "true" && directUrl) {
-    return directUrl;
-  }
-
-  // If DATABASE_URL is an Accelerate URL, prefer DIRECT_URL for stable schema parity.
-  if (databaseUrl?.startsWith("prisma+postgres://") && directUrl) {
-    return directUrl;
-  }
-
-  return databaseUrl ?? directUrl;
-};
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "@/generated/prisma/client";
+import { resolveDatasourceUrl } from "@/lib/db-url";
 
 const createPrismaClient = () =>
   new PrismaClient({
-    datasourceUrl: resolveDatasourceUrl(),
+    adapter: new PrismaPg({ connectionString: resolveDatasourceUrl() }),
     log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
   });
 

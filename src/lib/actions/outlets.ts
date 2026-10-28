@@ -1,6 +1,6 @@
 "use server";
 
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { outletSchema } from "@/lib/validations";
@@ -41,7 +41,7 @@ export async function getOutletsPage(page: number, pageSize: number): Promise<{ 
 export async function createOutlet(data: { name: string; location?: string }) {
   const result = outletSchema.safeParse(data);
   if (!result.success) {
-    return { error: result.error.errors[0].message };
+    return { error: result.error.issues[0].message };
   }
   await db.outlet.create({ data: result.data });
   revalidatePath("/admin/outlets");
@@ -54,7 +54,7 @@ export async function updateOutlet(
 ) {
   const result = outletSchema.safeParse(data);
   if (!result.success) {
-    return { error: result.error.errors[0].message };
+    return { error: result.error.issues[0].message };
   }
   await db.outlet.update({ where: { id }, data: result.data });
   revalidatePath("/admin/outlets");
