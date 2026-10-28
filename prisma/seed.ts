@@ -3,11 +3,16 @@
  * Run with: npx ts-node --compiler-options '{"module":"CommonJS"}' prisma/seed.ts
  */
 
-import { PrismaClient } from "@prisma/client";
+import "dotenv/config";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "../src/generated/prisma/client";
+import { resolveDatasourceUrl } from "../src/lib/db-url";
 import bcrypt from "bcryptjs";
 import { LAB_TESTS } from "../src/lib/utils/lab-reference-ranges";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: resolveDatasourceUrl() }),
+});
 
 function requireSeedSecret(name: string): string {
   const value = process.env[name];
