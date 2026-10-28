@@ -6,7 +6,7 @@ import { patientLookupSchema } from "@/lib/validations";
 export async function lookupPatientByPhone(contactNumber: string) {
   const result = patientLookupSchema.safeParse({ contactNumber });
   if (!result.success) {
-    return { error: result.error.errors[0].message };
+    return { error: result.error.issues[0].message };
   }
 
   const patient = await db.patient.findFirst({
